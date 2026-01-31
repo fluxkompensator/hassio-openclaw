@@ -3,7 +3,7 @@
 
 name: "OpenClaw"
 description: "OpenClaw.ai personal AI assistant with Home Assistant integration"
-version: "0.2.26"
+version: "0.2.27"
 slug: "openclaw"
 url: "https://github.com/openclaw/openclaw"
 

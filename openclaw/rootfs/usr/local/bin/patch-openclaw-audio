@@ -10,9 +10,9 @@ if [[ ! -f "$APPLY_JS" ]]; then
     exit 1
 fi
 
-# Check if already patched with v2
-if grep -q "PATCH_V2_AUDIO_FILTER" "$APPLY_JS"; then
-    echo "OpenClaw audio patch v2 already applied"
+# Check if already patched with v3
+if grep -q "PATCH_V3_AUDIO_FILTER" "$APPLY_JS"; then
+    echo "OpenClaw audio patch v3 already applied"
     exit 0
 fi
 
@@ -28,12 +28,22 @@ let code = fs.readFileSync(path, 'utf8');
 
 // Add the audio filter helper at the top of the file
 const audioFilterCode = `
-// PATCH_V2_AUDIO_FILTER: Skip audio files from model context
+// PATCH_V3_AUDIO_FILTER: Skip audio files from model context and clear MediaPath after transcription
 const _audioExtsToFilter = new Set(['.ogg', '.opus', '.mp3', '.wav', '.aac', '.flac', '.m4a', '.oga', '.webm', '.amr', '.3gp']);
 function _shouldFilterAudioFile(filePath) {
     if (!filePath) return false;
     const ext = '.' + String(filePath).toLowerCase().split('.').pop();
     return _audioExtsToFilter.has(ext);
+}
+function _clearAudioMediaFields(ctx) {
+    // Clear media fields to prevent native audio processing by Claude
+    // Similar to how Telegram handles this in bot-message-dispatch.js
+    ctx.MediaPath = undefined;
+    ctx.MediaUrl = undefined;
+    ctx.MediaType = undefined;
+    ctx.MediaPaths = undefined;
+    ctx.MediaUrls = undefined;
+    ctx.MediaTypes = undefined;
 }
 `;
 
@@ -44,10 +54,7 @@ if (importMatch) {
     code = code.slice(0, insertPos) + audioFilterCode + code.slice(insertPos);
 }
 
-// Find the attachment processing loop and add early exit for audio files
-// Look for: const nameHint = bufferResult?.fileName ?? attachment.path ?? attachment.url;
-// Add after it: if (_shouldFilterAudioFile(nameHint)) { continue; }
-
+// Patch 1: Filter audio files in extractFileBlocks
 code = code.replace(
     /(const nameHint = bufferResult\?\.fileName \?\? attachment\.path \?\? attachment\.url;)/g,
     `$1
@@ -58,8 +65,32 @@ code = code.replace(
         }`
 );
 
+// Patch 2: Clear MediaPath after successful audio transcription
+// Find: if (audioOutputs.length > 0) {
+//           const transcript = formatAudioTranscripts(audioOutputs);
+//           ctx.Transcript = transcript;
+// Add after ctx.Transcript = transcript: _clearAudioMediaFields(ctx);
+code = code.replace(
+    /(if \(audioOutputs\.length > 0\) \{\s*const transcript = formatAudioTranscripts\(audioOutputs\);\s*ctx\.Transcript = transcript;)/g,
+    `$1
+                // PATCH: Clear media fields to prevent native audio processing
+                _clearAudioMediaFields(ctx);
+                logVerbose?.("media: cleared audio MediaPath/MediaUrl after transcription");`
+);
+
 fs.writeFileSync(path, code);
-console.log('OpenClaw audio patch v2 applied successfully');
+console.log('OpenClaw audio patch v3 applied successfully');
+
+// Verify patches were applied
+const patched = fs.readFileSync(path, 'utf8');
+const hasFilter = patched.includes('_shouldFilterAudioFile(nameHint)');
+const hasClear = patched.includes('_clearAudioMediaFields(ctx)');
+if (hasFilter && hasClear) {
+    console.log('Verification: Both patches applied correctly');
+} else {
+    console.error('Verification FAILED: filter=' + hasFilter + ' clear=' + hasClear);
+    process.exit(1);
+}
 NODEJS_PATCH
 
 echo "Patch complete"

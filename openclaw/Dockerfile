@@ -47,7 +47,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends bzip2 ffmpeg \
     && curl -fSL -o /tmp/sherpa-onnx.tar.bz2 \
        "https://github.com/k2-fsa/sherpa-onnx/releases/download/v${SHERPA_VERSION}/${SHERPA_FILE}" \
     && tar xjf /tmp/sherpa-onnx.tar.bz2 -C /opt \
-    && rm /tmp/sherpa-onnx.tar.bz2
+    && rm /tmp/sherpa-onnx.tar.bz2 \
+    && for f in /opt/sherpa-onnx-*/bin/sherpa-onnx-offline; do ln -sf "$f" /usr/local/bin/sherpa-onnx-offline; done
 
 # Download whisper small multilingual model (best accuracy for German, English, etc.)
 # tiny=75MB (poor), base=150MB (good), small=500MB (best)
@@ -80,4 +81,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.2.26"
+    io.hass.version="0.2.27"

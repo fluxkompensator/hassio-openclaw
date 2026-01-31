@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.27] - 2026-01-31
+
+### Fixed
+- Clear MediaPath/MediaUrl after successful audio transcription
+- Previous patch only filtered audio in extractFileBlocks, but MediaPath remained
+- Claude's native audio support was still processing files via remaining MediaPath reference
+- Now clears all media fields (MediaPath, MediaUrl, MediaType, etc.) after transcription
+- Similar to how Telegram handles media cleanup to prevent native processing
+
 ## [0.2.26] - 2026-01-31
 
 ### Fixed
