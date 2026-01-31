@@ -60,10 +60,7 @@ if bashio::var.true "${SIGNAL_ENABLED}"; then
     SIGNAL_CHANNEL_CONFIG=$(cat << SIGNAL_EOF
   "channels": {
     "signal": {
-      "enabled": true,
-      "dataPath": "${OPENCLAW_HOME}/.signal-cli",
-      "phone": "${SIGNAL_PHONE}",
-      "transcription": "${VOICE_TRANSCRIPTION}"
+      "enabled": true
     }
   },
 SIGNAL_EOF
@@ -109,6 +106,10 @@ EOF
     echo "HOME=${OPENCLAW_HOME}"
     echo "OPENCLAW_GATEWAY_TOKEN=${GATEWAY_TOKEN}"
     echo "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}"
+    # Signal settings via env vars
+    echo "SIGNAL_CLI_CONFIG_DIR=${OPENCLAW_HOME}/.signal-cli"
+    echo "SIGNAL_PHONE=${SIGNAL_PHONE}"
+    echo "SIGNAL_TRANSCRIPTION=${VOICE_TRANSCRIPTION}"
 } > /var/run/s6/container_environment/openclaw-env
 
 # Install HA skill to OpenClaw

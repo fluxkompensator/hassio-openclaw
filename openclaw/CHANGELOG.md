@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1] - 2026-01-31
+
+### Fixed
+- Remove unrecognized keys from Signal channel config (dataPath, phone, transcription)
+- Pass Signal settings via environment variables instead
+
 ## [0.2.0] - 2026-01-31
 
 ### Added
