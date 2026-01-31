@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.19] - 2026-01-31
+
+### Changed
+- Switch to multilingual whisper-tiny model (supports German, English, etc.)
+- Previous .en model only supported English
+- Model files: tiny-encoder.onnx, tiny-decoder.onnx, tiny-tokens.txt
+
 ## [0.2.18] - 2026-01-31
 
 ### Fixed
