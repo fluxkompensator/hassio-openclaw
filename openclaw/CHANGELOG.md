@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.26] - 2026-01-31
+
+### Fixed
+- Rewrite audio patch using Node.js for reliable code modification
+- Previous sed-based patch had broken logic (&&/|| precedence issues)
+- New patch adds unconditional early exit for audio files in attachment loop
+- Audio files (.aac, .ogg, .opus, etc.) now skipped before reaching model context
+
 ## [0.2.24] - 2026-01-31
 
 ### Fixed

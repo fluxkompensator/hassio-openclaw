@@ -10,49 +10,56 @@ if [[ ! -f "$APPLY_JS" ]]; then
     exit 1
 fi
 
-# Check if already patched
-if grep -q "_patchAudioExts" "$APPLY_JS"; then
-    echo "OpenClaw audio patch already applied"
+# Check if already patched with v2
+if grep -q "PATCH_V2_AUDIO_FILTER" "$APPLY_JS"; then
+    echo "OpenClaw audio patch v2 already applied"
     exit 0
 fi
 
-# Find the line with 'kind === "audio"' check in file block logic
-# We need to add extension-based filtering alongside the kind check
+# Create backup
+cp "$APPLY_JS" "$APPLY_JS.bak"
 
-# Create the patch - insert audio extension filter before file blocks are added
-# The patch adds a check that skips audio files by extension
-cat > /tmp/audio-patch.js << 'PATCHEOF'
-// PATCH: Skip audio files from being included as <file> blocks.
-// Audio binary can bypass kind detection; also check file extension.
-// Transcripts are provided via [Audio] block from transcription.
-const _patchAudioExts = new Set(['.ogg', '.opus', '.mp3', '.wav', '.aac', '.flac', '.m4a', '.oga', '.webm']);
-function _isAudioFile(nameHint, kind) {
-  if (kind === "audio") return true;
-  if (!nameHint) return false;
-  const ext = nameHint.toLowerCase().split('.').pop();
-  return _patchAudioExts.has('.' + ext);
+# Create a Node.js script to properly patch the file
+node << 'NODEJS_PATCH'
+const fs = require('fs');
+const path = '/usr/lib/node_modules/openclaw/dist/media-understanding/apply.js';
+
+let code = fs.readFileSync(path, 'utf8');
+
+// Add the audio filter helper at the top of the file
+const audioFilterCode = `
+// PATCH_V2_AUDIO_FILTER: Skip audio files from model context
+const _audioExtsToFilter = new Set(['.ogg', '.opus', '.mp3', '.wav', '.aac', '.flac', '.m4a', '.oga', '.webm', '.amr', '.3gp']);
+function _shouldFilterAudioFile(filePath) {
+    if (!filePath) return false;
+    const ext = '.' + String(filePath).toLowerCase().split('.').pop();
+    return _audioExtsToFilter.has(ext);
 }
-PATCHEOF
+`;
 
-# Insert the patch at the top of the file (after 'use strict' if present)
-if grep -q '"use strict"' "$APPLY_JS"; then
-    sed -i '/"use strict"/r /tmp/audio-patch.js' "$APPLY_JS"
-else
-    # Insert at beginning
-    cat /tmp/audio-patch.js "$APPLY_JS" > /tmp/apply-patched.js
-    mv /tmp/apply-patched.js "$APPLY_JS"
-fi
+// Insert at the beginning after imports
+const importMatch = code.match(/^(import .+\n)+/m);
+if (importMatch) {
+    const insertPos = importMatch.index + importMatch[0].length;
+    code = code.slice(0, insertPos) + audioFilterCode + code.slice(insertPos);
+}
 
-# Now find and patch the file attachment logic
-# Look for where files are added to the message context and add our filter
-# This is typically in a loop that processes attachments
+// Find the attachment processing loop and add early exit for audio files
+// Look for: const nameHint = bufferResult?.fileName ?? attachment.path ?? attachment.url;
+// Add after it: if (_shouldFilterAudioFile(nameHint)) { continue; }
 
-# Add the filter check before files are appended
-# We need to find where 'kind' is checked and add our extension check
-sed -i 's/kind === "audio"/kind === "audio" || _isAudioFile(nameHint || attachment?.name || "", kind)/g' "$APPLY_JS"
+code = code.replace(
+    /(const nameHint = bufferResult\?\.fileName \?\? attachment\.path \?\? attachment\.url;)/g,
+    `$1
+        // PATCH: Skip audio files unconditionally
+        if (_shouldFilterAudioFile(nameHint)) {
+            logVerbose?.(\`media: file attachment skipped (audio filter) path=\${nameHint}\`);
+            continue;
+        }`
+);
 
-# Also try alternate patterns that might exist
-sed -i 's/kind === '\''audio'\''/kind === '\''audio'\'' || _isAudioFile(nameHint || attachment?.name || "", kind)/g' "$APPLY_JS"
+fs.writeFileSync(path, code);
+console.log('OpenClaw audio patch v2 applied successfully');
+NODEJS_PATCH
 
-echo "OpenClaw audio patch applied successfully"
-rm -f /tmp/audio-patch.js
+echo "Patch complete"
