@@ -109,6 +109,11 @@ cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
     "defaults": {
       "model": {
         "primary": "anthropic/claude-opus-4-5"
+      },
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "30m",
+        "keepLastAssistants": 5
       }
     }
   },
