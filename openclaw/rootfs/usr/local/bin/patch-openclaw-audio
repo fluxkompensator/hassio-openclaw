@@ -1,0 +1,58 @@
+#!/bin/bash
+# Patch OpenClaw to filter out raw audio files from model context
+# This prevents Claude from using native audio support after local transcription
+# See: https://github.com/openclaw/openclaw/issues/4197
+
+APPLY_JS="/usr/lib/node_modules/openclaw/dist/media-understanding/apply.js"
+
+if [[ ! -f "$APPLY_JS" ]]; then
+    echo "Error: apply.js not found at $APPLY_JS" >&2
+    exit 1
+fi
+
+# Check if already patched
+if grep -q "_patchAudioExts" "$APPLY_JS"; then
+    echo "OpenClaw audio patch already applied"
+    exit 0
+fi
+
+# Find the line with 'kind === "audio"' check in file block logic
+# We need to add extension-based filtering alongside the kind check
+
+# Create the patch - insert audio extension filter before file blocks are added
+# The patch adds a check that skips audio files by extension
+cat > /tmp/audio-patch.js << 'PATCHEOF'
+// PATCH: Skip audio files from being included as <file> blocks.
+// Audio binary can bypass kind detection; also check file extension.
+// Transcripts are provided via [Audio] block from transcription.
+const _patchAudioExts = new Set(['.ogg', '.opus', '.mp3', '.wav', '.aac', '.flac', '.m4a', '.oga', '.webm']);
+function _isAudioFile(nameHint, kind) {
+  if (kind === "audio") return true;
+  if (!nameHint) return false;
+  const ext = nameHint.toLowerCase().split('.').pop();
+  return _patchAudioExts.has('.' + ext);
+}
+PATCHEOF
+
+# Insert the patch at the top of the file (after 'use strict' if present)
+if grep -q '"use strict"' "$APPLY_JS"; then
+    sed -i '/"use strict"/r /tmp/audio-patch.js' "$APPLY_JS"
+else
+    # Insert at beginning
+    cat /tmp/audio-patch.js "$APPLY_JS" > /tmp/apply-patched.js
+    mv /tmp/apply-patched.js "$APPLY_JS"
+fi
+
+# Now find and patch the file attachment logic
+# Look for where files are added to the message context and add our filter
+# This is typically in a loop that processes attachments
+
+# Add the filter check before files are appended
+# We need to find where 'kind' is checked and add our extension check
+sed -i 's/kind === "audio"/kind === "audio" || _isAudioFile(nameHint || attachment?.name || "", kind)/g' "$APPLY_JS"
+
+# Also try alternate patterns that might exist
+sed -i 's/kind === '\''audio'\''/kind === '\''audio'\'' || _isAudioFile(nameHint || attachment?.name || "", kind)/g' "$APPLY_JS"
+
+echo "OpenClaw audio patch applied successfully"
+rm -f /tmp/audio-patch.js

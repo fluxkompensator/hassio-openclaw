@@ -3,10 +3,11 @@
 ## [0.2.24] - 2026-01-31
 
 ### Fixed
-- Add `stripAfterTranscript: true` to audio config
-- This removes raw audio binary after successful transcription
-- Prevents Claude Opus 4.5 from using native audio (which bypassed local transcription)
-- Fixes HTTP 429 rate limit errors caused by 30k+ token audio processing
+- Patch OpenClaw to filter out raw audio files from model context
+- After transcription succeeds, audio binary was still passed to Claude Opus 4.5
+- Claude's native audio support processed it (~30k tokens), causing rate limit errors
+- Patch adds extension-based filtering to prevent audio files in model context
+- See: https://github.com/openclaw/openclaw/issues/4197
 
 ## [0.2.23] - 2026-01-31
 

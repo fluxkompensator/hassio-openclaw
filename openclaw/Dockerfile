@@ -62,8 +62,9 @@ RUN npm install -g openclaw@latest
 # Copy root filesystem
 COPY rootfs /
 
-# Make transcription wrapper script executable
-RUN chmod +x /usr/local/bin/transcribe-audio
+# Make scripts executable and apply audio patch
+RUN chmod +x /usr/local/bin/transcribe-audio /usr/local/bin/patch-openclaw-audio \
+    && /usr/local/bin/patch-openclaw-audio
 
 # Install Signal setup web UI dependencies
 RUN cd /opt/signal-setup-web && npm install --omit=dev
