@@ -60,7 +60,11 @@ if bashio::var.true "${SIGNAL_ENABLED}"; then
     SIGNAL_CHANNEL_CONFIG=$(cat << SIGNAL_EOF
   "channels": {
     "signal": {
-      "enabled": true
+      "enabled": true,
+      "account": "${SIGNAL_PHONE}",
+      "cliPath": "signal-cli",
+      "configPath": "${OPENCLAW_HOME}/.signal-cli",
+      "dmPolicy": "open"
     }
   },
 SIGNAL_EOF

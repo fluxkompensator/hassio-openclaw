@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.9] - 2026-01-31
+
+### Fixed
+- Add missing Signal channel config: account, cliPath, configPath
+- Set dmPolicy to "open" for easier testing (no pairing code required)
+- OpenClaw needs these fields to connect to signal-cli
+
 ## [0.2.8] - 2026-01-31
 
 ### Fixed
