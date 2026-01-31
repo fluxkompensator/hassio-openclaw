@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.23] - 2026-01-31
+
+### Changed
+- Upgrade to whisper-small model (~500MB) for best transcription accuracy
+- RPi5 with 8GB RAM can handle it easily
+- Significantly better German and multilingual recognition than tiny/base
+
 ## [0.2.22] - 2026-01-31
 
 ### Changed
