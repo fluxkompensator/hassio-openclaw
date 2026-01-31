@@ -71,6 +71,25 @@ SIGNAL_EOF
 )
 fi
 
+# Build audio transcription config if enabled
+AUDIO_CONFIG=""
+if [[ "${VOICE_TRANSCRIPTION}" == "sherpa-onnx" ]]; then
+    bashio::log.info "Voice transcription enabled: sherpa-onnx"
+    AUDIO_CONFIG=$(cat << AUDIO_EOF
+  "tools": {
+    "media": {
+      "audio": {
+        "enabled": true,
+        "models": [
+          { "provider": "local", "command": "sherpa-onnx-offline" }
+        ]
+      }
+    }
+  },
+AUDIO_EOF
+)
+fi
+
 cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
 {
   "env": {
@@ -83,6 +102,7 @@ cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
       }
     }
   },
+${AUDIO_CONFIG}
 ${SIGNAL_CHANNEL_CONFIG}
   "gateway": {
     "port": 18789,

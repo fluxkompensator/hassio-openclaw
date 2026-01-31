@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.15] - 2026-01-31
+
+### Fixed
+- Add tools.media.audio config to openclaw.json when voice_transcription is sherpa-onnx
+- OpenClaw requires explicit audio config to enable transcription
+
 ## [0.2.14] - 2026-01-31
 
 ### Fixed
