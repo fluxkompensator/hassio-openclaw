@@ -18,6 +18,7 @@ WORKSPACE_PATH=$(bashio::config 'workspace_path')
 SIGNAL_ENABLED=$(bashio::config 'signal_enabled')
 SIGNAL_PHONE=$(bashio::config 'signal_phone')
 VOICE_TRANSCRIPTION=$(bashio::config 'voice_transcription')
+TTS_VOICE=$(bashio::config 'tts_voice')
 
 # Determine Home Assistant access method
 if bashio::config.has_value 'ha_access_token'; then
@@ -100,6 +101,25 @@ AUDIO_EOF
     fi
 fi
 
+# Build TTS config for German voice (Edge TTS)
+TTS_CONFIG=""
+if bashio::config.has_value 'tts_voice' || [[ -n "${TTS_VOICE}" ]]; then
+    TTS_VOICE_FINAL="${TTS_VOICE:-de-DE-ConradNeural}"
+    bashio::log.info "TTS configured: Edge with voice ${TTS_VOICE_FINAL}"
+    TTS_CONFIG=$(cat << TTS_EOF
+  "messages": {
+    "tts": {
+      "auto": "always",
+      "provider": "edge",
+      "edge": {
+        "voice": "${TTS_VOICE_FINAL}"
+      }
+    }
+  },
+TTS_EOF
+)
+fi
+
 cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
 {
   "env": {
@@ -118,6 +138,7 @@ cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
     }
   },
 ${AUDIO_CONFIG}
+${TTS_CONFIG}
 ${SIGNAL_CHANNEL_CONFIG}
   "gateway": {
     "port": 18789,

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.28] - 2026-01-31
+
+### Added
+- Text-to-speech (TTS) support with Edge TTS provider
+- New `tts_voice` config option for German voice selection
+- Default voice: `de-DE-ConradNeural` (German male)
+- Other options: `de-DE-KatjaNeural` (female), `de-AT-JonasNeural` (Austrian), `de-CH-LeniNeural` (Swiss)
+- TTS auto-responds with voice when voice is configured
+
 ## [0.2.27] - 2026-01-31
 
 ### Fixed

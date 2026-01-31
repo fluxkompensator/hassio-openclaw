@@ -3,7 +3,7 @@
 
 name: "OpenClaw"
 description: "OpenClaw.ai personal AI assistant with Home Assistant integration"
-version: "0.2.27"
+version: "0.2.28"
 slug: "openclaw"
 url: "https://github.com/openclaw/openclaw"
 
@@ -48,6 +48,7 @@ options:
   signal_enabled: false
   signal_phone: ""
   voice_transcription: "none"
+  tts_voice: ""
 
 # Schema for options validation
 schema:
@@ -58,6 +59,7 @@ schema:
   signal_enabled: bool
   signal_phone: "str?"
   voice_transcription: list(sherpa-onnx|whisper|none)
+  tts_voice: "str?"
 
 # Environment variables
 environment:
