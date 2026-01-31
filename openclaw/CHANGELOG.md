@@ -1,13 +1,12 @@
 # Changelog
 
-## [0.2.5] - 2026-01-31
+## [0.2.6] - 2026-01-31
 
 ### Fixed
-- Install Java 21 from Adoptium/Temurin for signal-cli 0.13.4 compatibility
-- Debian Bookworm doesn't have openjdk-21, so use Adoptium repository
-- signal-cli 0.13.4 requires Java 21+ (class file version 65.0)
-- Download architecture-specific signal-cli build (aarch64 vs x86_64)
-- Generic build lacks native libsignal libraries for ARM
+- Copy signal-cli from bbernhard/signal-cli-rest-api multi-arch image
+- This image includes pre-built ARM64 native libsignal libraries
+- signal-cli releases don't include ARM64 native builds
+- Install Java 21 from Adoptium/Temurin (Debian Bookworm lacks openjdk-21)
 
 ## [0.2.3] - 2026-01-31
 
