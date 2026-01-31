@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.16] - 2026-01-31
+
+### Fixed
+- Install ffmpeg for audio format conversion (AAC → WAV)
+- sherpa-onnx requires WAV input, Signal sends AAC voice notes
+- Without ffmpeg, OpenClaw falls back to Claude's native audio (30k+ tokens)
+
 ## [0.2.15] - 2026-01-31
 
 ### Fixed

@@ -32,9 +32,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget apt-transp
 COPY --from=signal-cli-source /opt/signal-cli-* /opt/signal-cli/
 RUN ln -s /opt/signal-cli/bin/signal-cli /usr/local/bin/signal-cli
 
-# Install sherpa-onnx for voice transcription
+# Install ffmpeg for audio conversion (AAC -> WAV) and sherpa-onnx for transcription
 ARG SHERPA_VERSION=1.12.20
-RUN apt-get update && apt-get install -y --no-install-recommends bzip2 \
+RUN apt-get update && apt-get install -y --no-install-recommends bzip2 ffmpeg \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && ARCH=$(uname -m) \
     && if [ "$ARCH" = "x86_64" ]; then \
@@ -81,4 +81,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.2.15"
+    io.hass.version="0.2.16"
