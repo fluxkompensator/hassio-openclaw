@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.24] - 2026-01-31
+
+### Fixed
+- Add `stripAfterTranscript: true` to audio config
+- This removes raw audio binary after successful transcription
+- Prevents Claude Opus 4.5 from using native audio (which bypassed local transcription)
+- Fixes HTTP 429 rate limit errors caused by 30k+ token audio processing
+
 ## [0.2.23] - 2026-01-31
 
 ### Changed

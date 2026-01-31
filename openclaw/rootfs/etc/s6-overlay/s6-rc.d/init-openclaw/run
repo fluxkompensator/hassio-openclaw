@@ -83,6 +83,7 @@ if [[ "${VOICE_TRANSCRIPTION}" == "sherpa-onnx" ]]; then
     "media": {
       "audio": {
         "enabled": true,
+        "stripAfterTranscript": true,
         "models": [
           {
             "type": "cli",
