@@ -102,8 +102,13 @@ mkdir -p "${AGENT_DIR}"
 
 cat > "${AGENT_DIR}/auth-profiles.json" << EOF
 {
-  "anthropic": {
-    "apiKey": "${ANTHROPIC_API_KEY}"
+  "version": 1,
+  "profiles": {
+    "anthropic:manual": {
+      "type": "token",
+      "provider": "anthropic",
+      "token": "${ANTHROPIC_API_KEY}"
+    }
   }
 }
 EOF

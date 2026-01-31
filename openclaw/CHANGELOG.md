@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.11] - 2026-01-31
+
+### Fixed
+- Use correct auth-profiles.json format with version and profiles structure
+- Format: `{"version": 1, "profiles": {"anthropic:manual": {"type": "token", ...}}}`
+
 ## [0.1.10] - 2026-01-31
 
 ### Fixed
