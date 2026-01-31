@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.20] - 2026-01-31
+
+### Fixed
+- Create transcribe-audio wrapper script that converts AAC→WAV before sherpa-onnx
+- OpenClaw passes raw AAC files but sherpa-onnx only supports WAV
+- Without conversion, OpenClaw falls back to Claude's native audio (30k+ tokens)
+- Wrapper uses ffmpeg for conversion, then extracts transcription text
+
 ## [0.2.19] - 2026-01-31
 
 ### Changed

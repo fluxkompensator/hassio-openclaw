@@ -1,0 +1,42 @@
+#!/bin/bash
+# Wrapper script for sherpa-onnx that converts any audio format to WAV first
+# Usage: transcribe-audio <input-audio-file>
+
+set -e
+
+INPUT_FILE="$1"
+if [[ -z "$INPUT_FILE" || ! -f "$INPUT_FILE" ]]; then
+    echo "Error: Input file not found: $INPUT_FILE" >&2
+    exit 1
+fi
+
+# Find sherpa-onnx binary
+SHERPA_BIN=$(ls /opt/sherpa-onnx-*/bin/sherpa-onnx-offline 2>/dev/null | head -1)
+if [[ -z "$SHERPA_BIN" ]]; then
+    echo "Error: sherpa-onnx-offline not found" >&2
+    exit 1
+fi
+
+# Whisper model directory
+WHISPER_DIR="/opt/sherpa-onnx-whisper-tiny"
+if [[ ! -d "$WHISPER_DIR" ]]; then
+    echo "Error: Whisper model not found at $WHISPER_DIR" >&2
+    exit 1
+fi
+
+# Create temp WAV file
+TEMP_WAV=$(mktemp /tmp/transcribe-XXXXXX.wav)
+trap "rm -f $TEMP_WAV" EXIT
+
+# Convert input to 16kHz mono WAV (required by sherpa-onnx)
+ffmpeg -y -i "$INPUT_FILE" -ar 16000 -ac 1 -f wav "$TEMP_WAV" 2>/dev/null
+
+# Run sherpa-onnx and extract just the transcription text
+OUTPUT=$("$SHERPA_BIN" \
+    --whisper-encoder="$WHISPER_DIR/tiny-encoder.onnx" \
+    --whisper-decoder="$WHISPER_DIR/tiny-decoder.onnx" \
+    --tokens="$WHISPER_DIR/tiny-tokens.txt" \
+    "$TEMP_WAV" 2>/dev/null)
+
+# Extract just the text from JSON output (sherpa outputs JSON with "text" field)
+echo "$OUTPUT" | grep -o '"text": "[^"]*"' | sed 's/"text": "//;s/"$//' | head -1

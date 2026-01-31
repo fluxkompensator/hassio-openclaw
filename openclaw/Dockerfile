@@ -61,8 +61,8 @@ RUN npm install -g openclaw@latest
 # Copy root filesystem
 COPY rootfs /
 
-# Make sherpa-onnx wrapper script executable
-RUN chmod +x /usr/local/bin/sherpa-onnx-offline
+# Make transcription wrapper script executable
+RUN chmod +x /usr/local/bin/transcribe-audio
 
 # Install Signal setup web UI dependencies
 RUN cd /opt/signal-setup-web && npm install --omit=dev
@@ -78,4 +78,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.2.19"
+    io.hass.version="0.2.20"
