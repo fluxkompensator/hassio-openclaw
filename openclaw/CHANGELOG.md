@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.10] - 2026-01-31
+
+### Fixed
+- Use correct config format: API key in env section, model in agents.defaults
+- Export ANTHROPIC_API_KEY as environment variable
+
 ## [0.1.9] - 2026-01-31
 
 ### Fixed
