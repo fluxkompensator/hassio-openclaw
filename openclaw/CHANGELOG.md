@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.4] - 2026-01-31
+## [0.2.5] - 2026-01-31
 
 ### Fixed
 - Install Java 21 from Adoptium/Temurin for signal-cli 0.13.4 compatibility
