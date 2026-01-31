@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.3] - 2026-01-31
+
+### Fixed
+- Run `openclaw doctor --fix` on startup to enable Signal channel
+- OpenClaw requires doctor --fix to apply channel configuration changes
+
 ## [0.2.2] - 2026-01-31
 
 ### Fixed

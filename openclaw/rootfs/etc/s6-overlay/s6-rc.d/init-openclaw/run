@@ -138,4 +138,11 @@ EOF
 
 bashio::log.info "Anthropic API key configured"
 
+# Run openclaw doctor --fix if Signal is enabled to apply channel changes
+if bashio::var.true "${SIGNAL_ENABLED}"; then
+    bashio::log.info "Running openclaw doctor --fix to enable Signal channel..."
+    cd "${WORKSPACE_PATH}" || exit 1
+    HOME="${OPENCLAW_HOME}" openclaw doctor --fix || bashio::log.warning "openclaw doctor --fix returned non-zero"
+fi
+
 bashio::log.info "OpenClaw initialization complete"
