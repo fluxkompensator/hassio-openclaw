@@ -31,8 +31,8 @@ while true; do
 
         if [[ -n "${REGISTERED_PHONE}" ]]; then
             bashio::log.info "Found registered account: ${REGISTERED_PHONE}"
-            bashio::log.info "Starting signal-cli daemon..."
-            exec signal-cli --config "${SIGNAL_CLI_CONFIG_DIR}" -a "${REGISTERED_PHONE}" daemon --socket /tmp/signal-cli.sock
+            bashio::log.info "Starting signal-cli daemon on HTTP port 8080..."
+            exec signal-cli --config "${SIGNAL_CLI_CONFIG_DIR}" -a "${REGISTERED_PHONE}" daemon --http=127.0.0.1:8080
         fi
     fi
 
