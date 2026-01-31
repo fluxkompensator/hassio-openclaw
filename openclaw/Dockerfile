@@ -14,9 +14,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Java runtime for signal-cli
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    openjdk-21-jre-headless \
+# Install Java 21 runtime for signal-cli (from Adoptium/Temurin)
+RUN apt-get update && apt-get install -y --no-install-recommends wget apt-transport-https \
+    && mkdir -p /etc/apt/keyrings \
+    && wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor -o /etc/apt/keyrings/adoptium.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb $(. /etc/os-release && echo $VERSION_CODENAME) main" > /etc/apt/sources.list.d/adoptium.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends temurin-21-jre \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
