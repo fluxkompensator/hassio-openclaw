@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.21] - 2026-01-31
+
+### Fixed
+- Fix transcribe-audio script: use for loop to find sherpa-onnx binary (glob expansion issue)
+- Better JSON text extraction from sherpa-onnx output
+- Add error handling for ffmpeg conversion
+- Architecture-independent binary detection
+
 ## [0.2.20] - 2026-01-31
 
 ### Fixed

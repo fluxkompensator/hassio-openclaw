@@ -2,17 +2,22 @@
 # Wrapper script for sherpa-onnx that converts any audio format to WAV first
 # Usage: transcribe-audio <input-audio-file>
 
-set -e
-
 INPUT_FILE="$1"
 if [[ -z "$INPUT_FILE" || ! -f "$INPUT_FILE" ]]; then
     echo "Error: Input file not found: $INPUT_FILE" >&2
     exit 1
 fi
 
-# Find sherpa-onnx binary
-SHERPA_BIN=$(ls /opt/sherpa-onnx-*/bin/sherpa-onnx-offline 2>/dev/null | head -1)
-if [[ -z "$SHERPA_BIN" ]]; then
+# Find sherpa-onnx binary (architecture-independent)
+SHERPA_BIN=""
+for dir in /opt/sherpa-onnx-*/bin; do
+    if [[ -x "$dir/sherpa-onnx-offline" ]]; then
+        SHERPA_BIN="$dir/sherpa-onnx-offline"
+        break
+    fi
+done
+
+if [[ ! -x "$SHERPA_BIN" ]]; then
     echo "Error: sherpa-onnx-offline not found" >&2
     exit 1
 fi
@@ -29,14 +34,25 @@ TEMP_WAV=$(mktemp /tmp/transcribe-XXXXXX.wav)
 trap "rm -f $TEMP_WAV" EXIT
 
 # Convert input to 16kHz mono WAV (required by sherpa-onnx)
-ffmpeg -y -i "$INPUT_FILE" -ar 16000 -ac 1 -f wav "$TEMP_WAV" 2>/dev/null
+if ! ffmpeg -y -i "$INPUT_FILE" -ar 16000 -ac 1 -f wav "$TEMP_WAV" 2>/dev/null; then
+    echo "Error: ffmpeg conversion failed" >&2
+    exit 1
+fi
 
-# Run sherpa-onnx and extract just the transcription text
+# Run sherpa-onnx
 OUTPUT=$("$SHERPA_BIN" \
     --whisper-encoder="$WHISPER_DIR/tiny-encoder.onnx" \
     --whisper-decoder="$WHISPER_DIR/tiny-decoder.onnx" \
     --tokens="$WHISPER_DIR/tiny-tokens.txt" \
-    "$TEMP_WAV" 2>/dev/null)
+    "$TEMP_WAV" 2>&1)
 
-# Extract just the text from JSON output (sherpa outputs JSON with "text" field)
-echo "$OUTPUT" | grep -o '"text": "[^"]*"' | sed 's/"text": "//;s/"$//' | head -1
+# Extract text from JSON line (sherpa outputs: {"lang": "...", "text": "...", ...})
+# Use grep to find the JSON line, then extract the text field
+TEXT=$(echo "$OUTPUT" | grep '"text"' | sed 's/.*"text": *"//;s/".*//')
+
+if [[ -n "$TEXT" ]]; then
+    echo "$TEXT"
+else
+    # Fallback: output everything after "Done!" if no JSON found
+    echo "$OUTPUT" | sed -n '/^Done!/,$ p' | tail -n +2
+fi
