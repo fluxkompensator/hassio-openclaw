@@ -15,3 +15,6 @@ npm-debug.log
 # Local testing
 .env
 *.local
+
+# SSH keys
+.ssh/
