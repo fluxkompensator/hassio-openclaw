@@ -10,6 +10,23 @@ bashio::log.info "Initializing OpenClaw addon..."
 mkdir -p /data/openclaw
 mkdir -p "$(bashio::config 'workspace_path')"
 
+# Apply DNS/hosts overrides
+MARKER="# OpenClaw DNS Override"
+# Remove old OpenClaw entries first
+sed -i "/${MARKER}/d" /etc/hosts 2>/dev/null || true
+
+DNS_COUNT=$(bashio::config 'dns_overrides | length')
+if [[ "${DNS_COUNT}" -gt 0 ]]; then
+    bashio::log.info "Applying ${DNS_COUNT} DNS override(s)..."
+    for ((i=0; i<DNS_COUNT; i++)); do
+        ENTRY=$(bashio::config "dns_overrides[${i}]")
+        if [[ -n "${ENTRY}" ]]; then
+            echo "${ENTRY} ${MARKER}" >> /etc/hosts
+            bashio::log.info "  Added: ${ENTRY}"
+        fi
+    done
+fi
+
 # Get configuration values
 ANTHROPIC_API_KEY=$(bashio::config 'anthropic_api_key')
 HA_ACCESS_TOKEN=$(bashio::config 'ha_access_token')

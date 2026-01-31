@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.29] - 2026-01-31
+
+### Added
+- DNS override configuration via `dns_overrides` option
+- Allows adding custom `/etc/hosts` entries at addon startup
+- Format: `"IP hostname"` (same as /etc/hosts format)
+- Useful for resolving local hostnames, internal services, or testing
+- Entries are marked and cleaned up on restart (idempotent)
+
+### Example Configuration
+```yaml
+dns_overrides:
+  - "192.168.1.100 mynas.local"
+  - "10.0.0.50 printer.home"
+```
+
 ## [0.2.28] - 2026-01-31
 
 ### Added
