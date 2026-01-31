@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8] - 2026-01-31
+
+### Changed
+- Enable host_network mode for WebSocket compatibility
+- Expose port 18789 directly (access at http://homeassistant.local:18789)
+- Ingress kept for sidebar link, but direct access recommended for web UI
+
 ## [0.1.7] - 2026-01-31
 
 ### Fixed

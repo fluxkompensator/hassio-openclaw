@@ -3,7 +3,7 @@
 
 name: "OpenClaw"
 description: "OpenClaw.ai personal AI assistant with Home Assistant integration"
-version: "0.1.7"
+version: "0.1.8"
 slug: "openclaw"
 url: "https://github.com/openclaw/openclaw"
 
@@ -25,6 +25,13 @@ ingress_port: 18789
 ingress_stream: true
 panel_icon: "mdi:robot"
 panel_title: "OpenClaw"
+
+# Network ports (direct access bypasses ingress WebSocket issues)
+ports:
+  18789/tcp: 18789
+
+# Host network mode for better WebSocket compatibility
+host_network: true
 
 # Directory mappings
 map:
