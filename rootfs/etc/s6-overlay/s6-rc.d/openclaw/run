@@ -1,0 +1,23 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Start OpenClaw gateway
+# ==============================================================================
+
+bashio::log.info "Starting OpenClaw gateway..."
+
+# Source environment variables
+if [[ -f /var/run/s6/container_environment/openclaw-env ]]; then
+    # shellcheck disable=SC1091
+    source /var/run/s6/container_environment/openclaw-env
+fi
+
+# Set HOME for OpenClaw
+export HOME="${OPENCLAW_CONFIG_DIR:-/data/openclaw}"
+export NODE_ENV="production"
+
+# Change to workspace directory
+cd "${OPENCLAW_WORKSPACE_DIR:-/share/openclaw}" || exit 1
+
+# Start OpenClaw gateway
+exec openclaw gateway --port 18789 --host 0.0.0.0

@@ -1,0 +1,66 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Initialize OpenClaw configuration
+# ==============================================================================
+
+bashio::log.info "Initializing OpenClaw addon..."
+
+# Create config directories
+mkdir -p /data/openclaw
+mkdir -p "$(bashio::config 'workspace_path')"
+
+# Get configuration values
+ANTHROPIC_API_KEY=$(bashio::config 'anthropic_api_key')
+HA_ACCESS_TOKEN=$(bashio::config 'ha_access_token')
+LOG_LEVEL=$(bashio::config 'log_level')
+WORKSPACE_PATH=$(bashio::config 'workspace_path')
+
+# Determine Home Assistant access method
+if bashio::config.has_value 'ha_access_token'; then
+    bashio::log.info "Using provided Home Assistant access token"
+    HA_TOKEN="${HA_ACCESS_TOKEN}"
+    HA_URL="http://supervisor/core"
+else
+    bashio::log.info "Using Supervisor API token"
+    HA_TOKEN="${SUPERVISOR_TOKEN}"
+    HA_URL="http://supervisor/core"
+fi
+
+# Create OpenClaw config directory
+OPENCLAW_HOME="/data/openclaw"
+mkdir -p "${OPENCLAW_HOME}"
+
+# Generate OpenClaw configuration
+cat > "${OPENCLAW_HOME}/openclaw.json" << EOF
+{
+  "model": {
+    "provider": "anthropic",
+    "apiKey": "${ANTHROPIC_API_KEY}"
+  },
+  "gateway": {
+    "port": 18789,
+    "host": "0.0.0.0"
+  },
+  "workspace": "${WORKSPACE_PATH}",
+  "logLevel": "${LOG_LEVEL}"
+}
+EOF
+
+# Export environment variables for the main service
+{
+    echo "HA_TOKEN=${HA_TOKEN}"
+    echo "HA_URL=${HA_URL}"
+    echo "OPENCLAW_CONFIG_DIR=${OPENCLAW_HOME}"
+    echo "OPENCLAW_WORKSPACE_DIR=${WORKSPACE_PATH}"
+    echo "HOME=${OPENCLAW_HOME}"
+} > /var/run/s6/container_environment/openclaw-env
+
+# Install HA skill to OpenClaw
+SKILL_DIR="${OPENCLAW_HOME}/skills/homeassistant"
+mkdir -p "${SKILL_DIR}"
+cp -r /opt/openclaw-ha-skill/* "${SKILL_DIR}/"
+
+bashio::log.info "Home Assistant skill installed"
+
+bashio::log.info "OpenClaw initialization complete"

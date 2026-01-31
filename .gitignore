@@ -1,0 +1,17 @@
+# Node
+node_modules/
+npm-debug.log
+
+# Build artifacts
+*.log
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local testing
+.env
+*.local

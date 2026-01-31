@@ -1,0 +1,12 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Cleanup on OpenClaw shutdown
+# ==============================================================================
+
+bashio::log.info "OpenClaw gateway stopped"
+
+# Exit code handling
+if [[ "${1}" -ne 0 ]] && [[ "${1}" -ne 256 ]]; then
+    bashio::log.warning "OpenClaw gateway crashed with exit code ${1}"
+fi

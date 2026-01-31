@@ -1,0 +1,51 @@
+# OpenClaw Home Assistant Addon Configuration
+# https://developers.home-assistant.io/docs/add-ons/configuration
+
+name: "OpenClaw"
+description: "OpenClaw.ai personal AI assistant with Home Assistant integration"
+version: "0.1.0"
+slug: "openclaw"
+url: "https://github.com/openclaw/openclaw"
+
+# Supported architectures
+arch:
+  - aarch64
+  - amd64
+
+# Use s6-overlay instead of init system
+init: false
+
+# Home Assistant API access
+homeassistant_api: true
+hassio_api: true
+
+# Ingress configuration
+ingress: true
+ingress_port: 18789
+ingress_stream: true
+panel_icon: "mdi:robot"
+panel_title: "OpenClaw"
+
+# Directory mappings
+map:
+  - share:rw
+  - data:rw
+
+# Addon options with defaults
+options:
+  anthropic_api_key: ""
+  ha_access_token: ""
+  log_level: "info"
+  workspace_path: "/share/openclaw"
+
+# Schema for options validation
+schema:
+  anthropic_api_key: "password"
+  ha_access_token: "password?"
+  log_level: list(debug|info|warn|error)
+  workspace_path: str
+
+# Environment variables
+environment:
+  OPENCLAW_CONFIG_DIR: "/data/openclaw"
+  OPENCLAW_WORKSPACE_DIR: "/share/openclaw"

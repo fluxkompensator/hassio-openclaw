@@ -1,0 +1,8 @@
+{
+  "name": "openclaw-ha-skill",
+  "version": "0.1.0",
+  "description": "OpenClaw skill for Home Assistant integration",
+  "type": "module",
+  "main": "index.mjs",
+  "dependencies": {}
+}
