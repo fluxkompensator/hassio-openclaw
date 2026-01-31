@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.10] - 2026-01-31
+
+### Fixed
+- Remove invalid configPath key from Signal channel config
+- OpenClaw uses SIGNAL_CLI_CONFIG_DIR env var instead
+
 ## [0.2.9] - 2026-01-31
 
 ### Fixed
