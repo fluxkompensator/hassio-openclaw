@@ -1,13 +1,18 @@
 ARG BUILD_FROM
 FROM ${BUILD_FROM}
 
-# Install Node.js and npm
+# Install Node.js, npm, and build dependencies for native modules
 RUN apk add --no-cache \
     nodejs \
     npm \
-    git
+    git \
+    python3 \
+    make \
+    g++ \
+    libx11-dev \
+    libxcb-dev
 
-# Install OpenClaw globally
+# Install OpenClaw globally (with native module compilation)
 RUN npm install -g openclaw@latest
 
 # Copy root filesystem
