@@ -34,17 +34,19 @@ RUN ln -s /opt/signal-cli/bin/signal-cli /usr/local/bin/signal-cli
 
 # Install sherpa-onnx for voice transcription
 ARG SHERPA_VERSION=1.12.20
-RUN ARCH=$(uname -m) \
+RUN apt-get update && apt-get install -y --no-install-recommends bzip2 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && ARCH=$(uname -m) \
     && if [ "$ARCH" = "x86_64" ]; then \
-         SHERPA_ARCH="x86_64"; \
+         SHERPA_FILE="sherpa-onnx-v${SHERPA_VERSION}-linux-x64-shared.tar.bz2"; \
        elif [ "$ARCH" = "aarch64" ]; then \
-         SHERPA_ARCH="aarch64"; \
+         SHERPA_FILE="sherpa-onnx-v${SHERPA_VERSION}-linux-aarch64-shared-cpu.tar.bz2"; \
        else \
          echo "Unsupported architecture: $ARCH" && exit 1; \
        fi \
-    && curl -L -o /tmp/sherpa-onnx.tar.bz2 \
-       "https://github.com/k2-fsa/sherpa-onnx/releases/download/v${SHERPA_VERSION}/sherpa-onnx-v${SHERPA_VERSION}-linux-${SHERPA_ARCH}-shared.tar.bz2" \
-    && tar xf /tmp/sherpa-onnx.tar.bz2 -C /opt \
+    && curl -fSL -o /tmp/sherpa-onnx.tar.bz2 \
+       "https://github.com/k2-fsa/sherpa-onnx/releases/download/v${SHERPA_VERSION}/${SHERPA_FILE}" \
+    && tar xjf /tmp/sherpa-onnx.tar.bz2 -C /opt \
     && rm /tmp/sherpa-onnx.tar.bz2
 
 # Download whisper small model for transcription
@@ -79,4 +81,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.2.13"
+    io.hass.version="0.2.14"

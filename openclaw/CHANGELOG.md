@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.14] - 2026-01-31
+
+### Fixed
+- Fix sherpa-onnx download: use correct release filenames (linux-x64-shared, linux-aarch64-shared-cpu)
+- Install bzip2 for tar extraction
+
 ## [0.2.13] - 2026-01-31
 
 ### Added
