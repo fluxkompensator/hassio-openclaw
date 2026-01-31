@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.17] - 2026-01-31
+
+### Fixed
+- Configure sherpa-onnx with explicit Whisper model arguments
+- OpenClaw expects transducer model format by default, but we use Whisper
+- Pass --whisper-encoder, --whisper-decoder, --tokens args explicitly
+
 ## [0.2.16] - 2026-01-31
 
 ### Fixed
