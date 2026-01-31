@@ -40,7 +40,8 @@ cat > "${OPENCLAW_HOME}/openclaw.json" << EOF
   },
   "gateway": {
     "port": 18789,
-    "bind": "lan"
+    "bind": "lan",
+    "mode": "local"
   },
   "workspace": "${WORKSPACE_PATH}",
   "logLevel": "${LOG_LEVEL}"
