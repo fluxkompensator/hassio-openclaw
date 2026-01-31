@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7] - 2026-01-31
+
+### Fixed
+- Add signal-cli daemon service - was not running to receive messages
+- signal-cli now starts in daemon mode with Unix socket at /tmp/signal-cli.sock
+- OpenClaw gateway now depends on signal-cli being started first
+
 ## [0.2.6] - 2026-01-31
 
 ### Fixed
