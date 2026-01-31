@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.12] - 2026-01-31
+
+### Fixed
+- Write config to correct path: `/data/openclaw/.openclaw/openclaw.json`
+- OpenClaw expects config in `.openclaw` subdirectory, not root data dir
+
 ## [0.1.11] - 2026-01-31
 
 ### Fixed

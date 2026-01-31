@@ -46,8 +46,9 @@ bashio::log.info "Gateway token configured"
 # Log gateway token for user reference
 bashio::log.info "Gateway token: ${GATEWAY_TOKEN}"
 
-# Generate OpenClaw configuration
-cat > "${OPENCLAW_HOME}/openclaw.json" << EOF
+# Generate OpenClaw configuration in correct location
+mkdir -p "${OPENCLAW_HOME}/.openclaw"
+cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
 {
   "env": {
     "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
