@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.22] - 2026-01-31
+
+### Changed
+- Upgrade from whisper-tiny to whisper-base model for better transcription accuracy
+- tiny (~75MB) had poor quality, base (~150MB) provides much better accuracy
+- Especially improves German and multilingual recognition
+
 ## [0.2.21] - 2026-01-31
 
 ### Fixed

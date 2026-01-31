@@ -22,8 +22,8 @@ if [[ ! -x "$SHERPA_BIN" ]]; then
     exit 1
 fi
 
-# Whisper model directory
-WHISPER_DIR="/opt/sherpa-onnx-whisper-tiny"
+# Whisper model directory (base model for better accuracy)
+WHISPER_DIR="/opt/sherpa-onnx-whisper-base"
 if [[ ! -d "$WHISPER_DIR" ]]; then
     echo "Error: Whisper model not found at $WHISPER_DIR" >&2
     exit 1
@@ -41,9 +41,9 @@ fi
 
 # Run sherpa-onnx
 OUTPUT=$("$SHERPA_BIN" \
-    --whisper-encoder="$WHISPER_DIR/tiny-encoder.onnx" \
-    --whisper-decoder="$WHISPER_DIR/tiny-decoder.onnx" \
-    --tokens="$WHISPER_DIR/tiny-tokens.txt" \
+    --whisper-encoder="$WHISPER_DIR/base-encoder.onnx" \
+    --whisper-decoder="$WHISPER_DIR/base-decoder.onnx" \
+    --tokens="$WHISPER_DIR/base-tokens.txt" \
     "$TEMP_WAV" 2>&1)
 
 # Extract text from JSON line (sherpa outputs: {"lang": "...", "text": "...", ...})

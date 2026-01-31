@@ -49,9 +49,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends bzip2 ffmpeg \
     && tar xjf /tmp/sherpa-onnx.tar.bz2 -C /opt \
     && rm /tmp/sherpa-onnx.tar.bz2
 
-# Download whisper tiny multilingual model (supports German, English, etc.)
+# Download whisper base multilingual model (better accuracy for German, English, etc.)
+# tiny=75MB (poor), base=150MB (good), small=500MB (better)
 RUN curl -fSL -o /tmp/whisper-model.tar.bz2 \
-       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.tar.bz2" \
+       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-base.tar.bz2" \
     && tar xjf /tmp/whisper-model.tar.bz2 -C /opt \
     && rm /tmp/whisper-model.tar.bz2
 
@@ -78,4 +79,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.2.21"
+    io.hass.version="0.2.22"
