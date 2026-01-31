@@ -49,14 +49,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends bzip2 ffmpeg \
     && tar xjf /tmp/sherpa-onnx.tar.bz2 -C /opt \
     && rm /tmp/sherpa-onnx.tar.bz2
 
-# Download whisper small model for transcription
-RUN mkdir -p /opt/whisper-models \
-    && curl -L -o /opt/whisper-models/small-encoder.onnx \
-       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/whisper-small-encoder.onnx" \
-    && curl -L -o /opt/whisper-models/small-decoder.onnx \
-       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/whisper-small-decoder.onnx" \
-    && curl -L -o /opt/whisper-models/small-tokens.txt \
-       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/whisper-small-tokens.txt"
+# Download whisper tiny.en model for transcription (fast, good for ARM)
+RUN curl -fSL -o /tmp/whisper-model.tar.bz2 \
+       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-tiny.en.tar.bz2" \
+    && tar xjf /tmp/whisper-model.tar.bz2 -C /opt \
+    && rm /tmp/whisper-model.tar.bz2
 
 # Install OpenClaw globally
 RUN npm install -g openclaw@latest
@@ -81,4 +78,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.2.17"
+    io.hass.version="0.2.18"

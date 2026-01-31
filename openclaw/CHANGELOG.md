@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.18] - 2026-01-31
+
+### Fixed
+- Download whisper model as tar.bz2 archive (not individual files)
+- Previous URLs returned 9-byte error pages instead of model files
+- Use whisper-tiny.en model for fast transcription on ARM
+- Model files: tiny.en-encoder.onnx, tiny.en-decoder.onnx, tiny.en-tokens.txt
+
 ## [0.2.17] - 2026-01-31
 
 ### Fixed

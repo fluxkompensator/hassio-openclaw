@@ -77,8 +77,10 @@ if [[ "${VOICE_TRANSCRIPTION}" == "sherpa-onnx" ]]; then
     bashio::log.info "Voice transcription enabled: sherpa-onnx"
     # Find the sherpa-onnx binary path (version-dependent)
     SHERPA_BIN=$(ls /opt/sherpa-onnx-*/bin/sherpa-onnx-offline 2>/dev/null | head -1)
-    if [[ -n "${SHERPA_BIN}" ]]; then
+    WHISPER_DIR="/opt/sherpa-onnx-whisper-tiny.en"
+    if [[ -n "${SHERPA_BIN}" && -d "${WHISPER_DIR}" ]]; then
         bashio::log.info "Found sherpa-onnx at: ${SHERPA_BIN}"
+        bashio::log.info "Whisper model dir: ${WHISPER_DIR}"
         AUDIO_CONFIG=$(cat << AUDIO_EOF
   "tools": {
     "media": {
@@ -89,9 +91,9 @@ if [[ "${VOICE_TRANSCRIPTION}" == "sherpa-onnx" ]]; then
             "type": "cli",
             "command": "${SHERPA_BIN}",
             "args": [
-              "--whisper-encoder=/opt/whisper-models/small-encoder.onnx",
-              "--whisper-decoder=/opt/whisper-models/small-decoder.onnx",
-              "--tokens=/opt/whisper-models/small-tokens.txt",
+              "--whisper-encoder=${WHISPER_DIR}/tiny.en-encoder.onnx",
+              "--whisper-decoder=${WHISPER_DIR}/tiny.en-decoder.onnx",
+              "--tokens=${WHISPER_DIR}/tiny.en-tokens.txt",
               "{{MediaPath}}"
             ]
           }
@@ -102,7 +104,7 @@ if [[ "${VOICE_TRANSCRIPTION}" == "sherpa-onnx" ]]; then
 AUDIO_EOF
 )
     else
-        bashio::log.warning "sherpa-onnx binary not found in /opt"
+        bashio::log.warning "sherpa-onnx binary or whisper model not found"
     fi
 fi
 
