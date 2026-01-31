@@ -17,17 +17,25 @@ if ! bashio::var.true "${SIGNAL_ENABLED}"; then
     exec sleep infinity
 fi
 
-# Get phone number
-SIGNAL_PHONE=$(bashio::config 'signal_phone')
-if [[ -z "${SIGNAL_PHONE}" ]]; then
-    bashio::log.error "Signal phone number not configured"
-    exec sleep infinity
-fi
-
 # Set signal-cli config directory
 export SIGNAL_CLI_CONFIG_DIR="${SIGNAL_CLI_CONFIG_DIR:-/data/openclaw/.signal-cli}"
 
-bashio::log.info "Starting signal-cli daemon for ${SIGNAL_PHONE}..."
+# Wait for an account to be linked
+ACCOUNTS_FILE="${SIGNAL_CLI_CONFIG_DIR}/data/accounts.json"
 
-# Run signal-cli in daemon mode with JSON-RPC over stdout
-exec signal-cli -a "${SIGNAL_PHONE}" daemon --socket /tmp/signal-cli.sock
+while true; do
+    if [[ -f "${ACCOUNTS_FILE}" ]]; then
+        # Extract first registered phone number from accounts.json
+        # Format: {"accounts":[{"number":"+1234567890",...}]}
+        REGISTERED_PHONE=$(grep -oP '"\+[0-9]+' "${ACCOUNTS_FILE}" | head -1 | tr -d '"')
+
+        if [[ -n "${REGISTERED_PHONE}" ]]; then
+            bashio::log.info "Found registered account: ${REGISTERED_PHONE}"
+            bashio::log.info "Starting signal-cli daemon..."
+            exec signal-cli --config "${SIGNAL_CLI_CONFIG_DIR}" -a "${REGISTERED_PHONE}" daemon --socket /tmp/signal-cli.sock
+        fi
+    fi
+
+    bashio::log.info "Waiting for Signal account to be linked via web UI (port 18790)..."
+    sleep 10
+done

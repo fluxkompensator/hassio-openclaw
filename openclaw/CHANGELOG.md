@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.8] - 2026-01-31
+
+### Fixed
+- signal-cli daemon now detects registered account from accounts.json
+- Waits for account to be linked before starting daemon
+- Previously tried to use config phone number which didn't match linked account
+
 ## [0.2.7] - 2026-01-31
 
 ### Fixed
