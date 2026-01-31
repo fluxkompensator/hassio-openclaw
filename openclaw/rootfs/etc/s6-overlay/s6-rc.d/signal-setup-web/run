@@ -1,0 +1,17 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Start Signal setup web UI
+# ==============================================================================
+
+# Only run if Signal is enabled
+if ! bashio::config.true 'signal_enabled'; then
+    bashio::log.info "Signal not enabled, signal-setup-web service sleeping..."
+    exec sleep infinity
+fi
+
+bashio::log.info "Starting Signal setup web UI on port 18790..."
+
+cd /opt/signal-setup-web || exit 1
+
+exec node server.mjs

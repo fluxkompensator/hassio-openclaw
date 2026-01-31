@@ -15,6 +15,9 @@ ANTHROPIC_API_KEY=$(bashio::config 'anthropic_api_key')
 HA_ACCESS_TOKEN=$(bashio::config 'ha_access_token')
 LOG_LEVEL=$(bashio::config 'log_level')
 WORKSPACE_PATH=$(bashio::config 'workspace_path')
+SIGNAL_ENABLED=$(bashio::config 'signal_enabled')
+SIGNAL_PHONE=$(bashio::config 'signal_phone')
+VOICE_TRANSCRIPTION=$(bashio::config 'voice_transcription')
 
 # Determine Home Assistant access method
 if bashio::config.has_value 'ha_access_token'; then
@@ -48,6 +51,25 @@ bashio::log.info "Gateway token: ${GATEWAY_TOKEN}"
 
 # Generate OpenClaw configuration in correct location
 mkdir -p "${OPENCLAW_HOME}/.openclaw"
+
+# Build Signal channel config if enabled
+SIGNAL_CHANNEL_CONFIG=""
+if bashio::var.true "${SIGNAL_ENABLED}"; then
+    bashio::log.info "Signal channel enabled for phone: ${SIGNAL_PHONE}"
+    mkdir -p "${OPENCLAW_HOME}/.signal-cli"
+    SIGNAL_CHANNEL_CONFIG=$(cat << SIGNAL_EOF
+  "channels": {
+    "signal": {
+      "enabled": true,
+      "dataPath": "${OPENCLAW_HOME}/.signal-cli",
+      "phone": "${SIGNAL_PHONE}",
+      "transcription": "${VOICE_TRANSCRIPTION}"
+    }
+  },
+SIGNAL_EOF
+)
+fi
+
 cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
 {
   "env": {
@@ -60,6 +82,7 @@ cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
       }
     }
   },
+${SIGNAL_CHANNEL_CONFIG}
   "gateway": {
     "port": 18789,
     "bind": "lan",

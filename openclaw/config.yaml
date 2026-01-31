@@ -3,7 +3,7 @@
 
 name: "OpenClaw"
 description: "OpenClaw.ai personal AI assistant with Home Assistant integration"
-version: "0.1.13"
+version: "0.2.0"
 slug: "openclaw"
 url: "https://github.com/openclaw/openclaw"
 
@@ -29,6 +29,7 @@ panel_title: "OpenClaw"
 # Network ports (direct access bypasses ingress WebSocket issues)
 ports:
   18789/tcp: 18789
+  18790/tcp: 18790
 
 # Host network mode for better WebSocket compatibility
 host_network: true
@@ -44,6 +45,9 @@ options:
   ha_access_token: ""
   log_level: "info"
   workspace_path: "/share/openclaw"
+  signal_enabled: false
+  signal_phone: ""
+  voice_transcription: "none"
 
 # Schema for options validation
 schema:
@@ -51,6 +55,9 @@ schema:
   ha_access_token: "password?"
   log_level: list(debug|info|warn|error)
   workspace_path: str
+  signal_enabled: bool
+  signal_phone: "str?"
+  voice_transcription: list(sherpa-onnx|whisper|none)
 
 # Environment variables
 environment:

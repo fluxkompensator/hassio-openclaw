@@ -7,6 +7,7 @@ Control your smart home with natural language using [OpenClaw.ai](https://opencl
 - **Web UI Access** - Access the OpenClaw interface directly from your Home Assistant sidebar
 - **Device Control** - Control all your Home Assistant devices using natural language commands
 - **Voice Integration** - Integrate with Home Assistant's voice assistants for hands-free control
+- **Signal Voice Messages** - Send voice messages via Signal for mobile access with E2E encryption
 
 ## Configuration
 
@@ -21,6 +22,9 @@ Control your smart home with natural language using [OpenClaw.ai](https://opencl
 | Option | Default | Description |
 |--------|---------|-------------|
 | `log_level` | `info` | Logging verbosity: `debug`, `info`, `warning`, `error` |
+| `signal_enabled` | `false` | Enable Signal voice message support |
+| `signal_phone` | | Your Signal phone number (e.g., +15551234567) |
+| `voice_transcription` | `none` | Voice transcription engine: `sherpa-onnx`, `whisper`, or `none` |
 
 ## Getting Your Anthropic API Key
 
@@ -32,9 +36,50 @@ Control your smart home with natural language using [OpenClaw.ai](https://opencl
 
 > **Note:** Keep your API key secure and never share it publicly.
 
-## Voice Integration Setup
+## Signal Voice Messages (Mobile Access)
 
-To use voice commands with OpenClaw, follow these steps:
+Control your home from anywhere using Signal voice messages with end-to-end encryption.
+
+### Setup
+
+1. **Configure the addon:**
+   - Set `signal_enabled` to `true`
+   - Set `signal_phone` to your phone number (e.g., `+15551234567`)
+   - Optionally set `voice_transcription` to `sherpa-onnx` or `whisper`
+
+2. **Link your Signal account (Web UI - Recommended):**
+   - Open the Signal Setup page: `http://homeassistant.local:18790`
+   - Click **Generate QR Code**
+   - Open Signal on your phone → **Settings** → **Linked Devices** → **Link New Device**
+   - Scan the QR code displayed in the browser
+
+   **Alternative (SSH):**
+   ```bash
+   docker exec -it $(docker ps -qf "name=openclaw") /opt/signal-setup.sh link
+   ```
+
+3. **Test it:**
+   - Send a voice message to your linked Signal number
+   - OpenClaw will transcribe and respond
+
+### Signal Setup Web UI
+
+Access the Signal setup interface at `http://homeassistant.local:18790` to:
+- Generate QR codes for linking
+- Check account status
+- Re-link if needed
+
+### Signal Setup Commands (SSH)
+
+| Command | Description |
+|---------|-------------|
+| `/opt/signal-setup.sh link` | Link to existing Signal account |
+| `/opt/signal-setup.sh status` | Check Signal account status |
+| `/opt/signal-setup.sh receive` | Test receiving messages |
+
+## Voice Integration Setup (Home Assistant Voice)
+
+To use voice commands with OpenClaw via Home Assistant's built-in voice pipeline, follow these steps:
 
 ### Step 1: Add REST Command
 

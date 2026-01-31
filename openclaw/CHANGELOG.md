@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.0] - 2026-01-31
+
+### Added
+- Signal voice message support for mobile access with E2E encryption
+- signal-cli integration for Signal communication
+- **Signal Setup Web UI** at port 18790 - link Signal account with QR code from browser
+- Voice transcription options (sherpa-onnx, whisper, none)
+- Signal registration helper script (`/opt/signal-setup.sh`)
+- New config options: `signal_enabled`, `signal_phone`, `voice_transcription`
+
+### Setup
+1. Enable Signal in addon config and set your phone number
+2. Open `http://homeassistant.local:18790` in browser
+3. Click "Generate QR Code" and scan with Signal app
+4. Send voice messages to OpenClaw via Signal
+
 ## [0.1.13] - 2026-01-31
 
 ### Fixed
