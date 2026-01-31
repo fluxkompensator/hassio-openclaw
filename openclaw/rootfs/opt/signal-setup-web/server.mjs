@@ -15,7 +15,9 @@ let linkingState = {
   uri: null,
   qrDataUrl: null,
   error: null,
-  linked: false
+  linked: false,
+  stderr: '',
+  stdout: ''
 };
 
 function getConfig() {
@@ -245,7 +247,7 @@ app.post('/api/link', async (req, res) => {
     return res.json({ error: 'Link process already in progress' });
   }
 
-  linkingState = { active: true, uri: null, qrDataUrl: null, error: null, linked: false };
+  linkingState = { active: true, uri: null, qrDataUrl: null, error: null, linked: false, stderr: '', stdout: '' };
 
   try {
     // Run signal-cli link with URI output
@@ -255,12 +257,12 @@ app.post('/api/link', async (req, res) => {
       '--name', 'OpenClaw-HA'
     ], { stdio: ['pipe', 'pipe', 'pipe'] });
 
-    let output = '';
-
     proc.stdout.on('data', (data) => {
-      output += data.toString();
+      const text = data.toString();
+      linkingState.stdout += text;
+      console.log('[signal-cli stdout]', text);
       // Look for the sgnl:// URI
-      const match = output.match(/(sgnl:\/\/linkdevice\?[^\s]+)/);
+      const match = linkingState.stdout.match(/(sgnl:\/\/linkdevice\?[^\s]+)/);
       if (match && !linkingState.uri) {
         linkingState.uri = match[1];
         // Generate QR code
@@ -272,8 +274,10 @@ app.post('/api/link', async (req, res) => {
 
     proc.stderr.on('data', (data) => {
       const text = data.toString();
+      linkingState.stderr += text;
+      console.log('[signal-cli stderr]', text);
       // signal-cli outputs the link URI to stderr
-      const match = text.match(/(sgnl:\/\/linkdevice\?[^\s]+)/);
+      const match = linkingState.stderr.match(/(sgnl:\/\/linkdevice\?[^\s]+)/);
       if (match && !linkingState.uri) {
         linkingState.uri = match[1];
         QRCode.toDataURL(linkingState.uri, { width: 280, margin: 2 })
@@ -284,10 +288,13 @@ app.post('/api/link', async (req, res) => {
 
     proc.on('close', (code) => {
       linkingState.active = false;
+      console.log('[signal-cli] exited with code', code);
       if (code === 0) {
         linkingState.linked = true;
       } else if (!linkingState.error) {
-        linkingState.error = `Link process exited with code ${code}`;
+        // Include stderr in error message for debugging
+        const errDetail = linkingState.stderr.trim() || linkingState.stdout.trim() || 'No output';
+        linkingState.error = `signal-cli exited with code ${code}: ${errDetail}`;
       }
     });
 
@@ -327,6 +334,48 @@ app.get('/api/status', (req, res) => {
     linked: linkingState.linked || checkLinked(),
     error: linkingState.error
   });
+});
+
+// Debug endpoint - check signal-cli installation
+app.get('/api/debug', (req, res) => {
+  const results = { checks: [] };
+
+  // Check signal-cli version
+  try {
+    const version = execSync('signal-cli --version 2>&1', { encoding: 'utf8', timeout: 10000 });
+    results.checks.push({ name: 'signal-cli version', ok: true, output: version.trim() });
+  } catch (err) {
+    results.checks.push({ name: 'signal-cli version', ok: false, output: err.message });
+  }
+
+  // Check Java
+  try {
+    const java = execSync('java -version 2>&1', { encoding: 'utf8', timeout: 10000 });
+    results.checks.push({ name: 'java version', ok: true, output: java.split('\n')[0] });
+  } catch (err) {
+    results.checks.push({ name: 'java version', ok: false, output: err.message });
+  }
+
+  // Check data directory
+  try {
+    const exists = existsSync(SIGNAL_DATA_DIR);
+    results.checks.push({ name: 'data dir exists', ok: exists, output: SIGNAL_DATA_DIR });
+  } catch (err) {
+    results.checks.push({ name: 'data dir', ok: false, output: err.message });
+  }
+
+  // Check config
+  const config = getConfig();
+  results.checks.push({ name: 'config', ok: config.enabled && !!config.phone, output: JSON.stringify(config) });
+
+  // Include last linking state
+  results.lastLinkState = {
+    stdout: linkingState.stdout,
+    stderr: linkingState.stderr,
+    error: linkingState.error
+  };
+
+  res.json(results);
 });
 
 app.listen(PORT, '0.0.0.0', () => {

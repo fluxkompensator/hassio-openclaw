@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.2] - 2026-01-31
+
+### Fixed
+- Add detailed error output from signal-cli when link fails
+- Add debug endpoint at `/api/debug` to diagnose signal-cli issues
+
 ## [0.2.1] - 2026-01-31
 
 ### Fixed
