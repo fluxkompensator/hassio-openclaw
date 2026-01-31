@@ -63,7 +63,8 @@ if bashio::var.true "${SIGNAL_ENABLED}"; then
       "enabled": true,
       "account": "${SIGNAL_PHONE}",
       "cliPath": "signal-cli",
-      "dmPolicy": "open"
+      "dmPolicy": "open",
+      "allowFrom": ["*"]
     }
   },
 SIGNAL_EOF
