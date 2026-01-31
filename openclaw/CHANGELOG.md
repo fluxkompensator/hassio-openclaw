@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.13] - 2026-01-31
+
+### Fixed
+- Remove invalid config keys `workspace` and `logLevel` from openclaw.json
+
 ## [0.1.12] - 2026-01-31
 
 ### Fixed

@@ -73,9 +73,7 @@ cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
       "enabled": true,
       "allowInsecureAuth": true
     }
-  },
-  "workspace": "${WORKSPACE_PATH}",
-  "logLevel": "${LOG_LEVEL}"
+  }
 }
 EOF
 
