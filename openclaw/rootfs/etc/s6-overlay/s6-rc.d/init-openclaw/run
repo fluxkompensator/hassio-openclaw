@@ -89,4 +89,18 @@ cp -r /opt/openclaw-ha-skill/* "${SKILL_DIR}/"
 
 bashio::log.info "Home Assistant skill installed"
 
+# Create auth-profiles.json for the main agent
+AGENT_DIR="${OPENCLAW_HOME}/.openclaw/agents/main/agent"
+mkdir -p "${AGENT_DIR}"
+
+cat > "${AGENT_DIR}/auth-profiles.json" << EOF
+{
+  "anthropic": {
+    "apiKey": "${ANTHROPIC_API_KEY}"
+  }
+}
+EOF
+
+bashio::log.info "Anthropic API key configured"
+
 bashio::log.info "OpenClaw initialization complete"
