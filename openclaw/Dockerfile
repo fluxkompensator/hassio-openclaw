@@ -24,10 +24,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget apt-transp
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install signal-cli
+# Install signal-cli (architecture-specific build with native libs)
 ARG SIGNAL_CLI_VERSION=0.13.4
-RUN curl -L -o /tmp/signal-cli.tar.gz \
-    "https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}.tar.gz" \
+RUN ARCH=$(uname -m) \
+    && if [ "$ARCH" = "x86_64" ]; then \
+         SIGNAL_ARCH="Linux"; \
+       elif [ "$ARCH" = "aarch64" ]; then \
+         SIGNAL_ARCH="Linux-aarch64"; \
+       else \
+         echo "Unsupported architecture: $ARCH" && exit 1; \
+       fi \
+    && curl -L -o /tmp/signal-cli.tar.gz \
+       "https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}-${SIGNAL_ARCH}.tar.gz" \
     && tar xf /tmp/signal-cli.tar.gz -C /opt \
     && ln -s /opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli /usr/local/bin/signal-cli \
     && rm /tmp/signal-cli.tar.gz
