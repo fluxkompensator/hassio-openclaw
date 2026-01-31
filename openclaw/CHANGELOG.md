@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.4] - 2026-01-31
+
+### Fixed
+- Install Java 21 instead of Java 17 for signal-cli 0.13.4 compatibility
+- signal-cli 0.13.4 requires Java 21+ (class file version 65.0)
+
 ## [0.2.3] - 2026-01-31
 
 ### Fixed
