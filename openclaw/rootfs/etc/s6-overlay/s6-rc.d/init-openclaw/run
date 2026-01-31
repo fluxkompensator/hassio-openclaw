@@ -31,6 +31,18 @@ fi
 OPENCLAW_HOME="/data/openclaw"
 mkdir -p "${OPENCLAW_HOME}"
 
+# Generate or reuse gateway token (persists across restarts)
+TOKEN_FILE="${OPENCLAW_HOME}/.gateway-token"
+if [[ -f "${TOKEN_FILE}" ]]; then
+    GATEWAY_TOKEN=$(cat "${TOKEN_FILE}")
+else
+    GATEWAY_TOKEN=$(head -c 32 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 32)
+    echo "${GATEWAY_TOKEN}" > "${TOKEN_FILE}"
+    chmod 600 "${TOKEN_FILE}"
+fi
+
+bashio::log.info "Gateway token configured"
+
 # Generate OpenClaw configuration
 cat > "${OPENCLAW_HOME}/openclaw.json" << EOF
 {
@@ -41,7 +53,11 @@ cat > "${OPENCLAW_HOME}/openclaw.json" << EOF
   "gateway": {
     "port": 18789,
     "bind": "lan",
-    "mode": "local"
+    "mode": "local",
+    "auth": {
+      "mode": "token",
+      "token": "${GATEWAY_TOKEN}"
+    }
   },
   "workspace": "${WORKSPACE_PATH}",
   "logLevel": "${LOG_LEVEL}"
@@ -55,6 +71,7 @@ EOF
     echo "OPENCLAW_CONFIG_DIR=${OPENCLAW_HOME}"
     echo "OPENCLAW_WORKSPACE_DIR=${WORKSPACE_PATH}"
     echo "HOME=${OPENCLAW_HOME}"
+    echo "OPENCLAW_GATEWAY_TOKEN=${GATEWAY_TOKEN}"
 } > /var/run/s6/container_environment/openclaw-env
 
 # Install HA skill to OpenClaw
