@@ -1,6 +1,6 @@
 # OpenClaw Home Assistant Addon
 
-[![Open your Home Assistant instance and show the add add-on repository dialog](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FYOUR_USERNAME%2Fhassio-addon-openclaw)
+[![Open your Home Assistant instance and show the add add-on repository dialog](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Ffluxkompensator%2Fhassio-openclaw)
 
 Run [OpenClaw.ai](https://openclaw.ai/) as a Home Assistant addon.
 
@@ -25,7 +25,7 @@ OpenClaw is a personal AI assistant that can control your Home Assistant devices
 
 ## Documentation
 
-See [DOCS.md](DOCS.md) for detailed setup instructions.
+See [openclaw/DOCS.md](openclaw/DOCS.md) for detailed setup instructions.
 
 ## License
 
