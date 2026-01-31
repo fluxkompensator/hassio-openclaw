@@ -19,5 +19,16 @@ export NODE_ENV="production"
 # Change to workspace directory
 cd "${OPENCLAW_WORKSPACE_DIR:-/share/openclaw}" || exit 1
 
+# Read gateway token
+GATEWAY_TOKEN=""
+if [[ -f "${HOME}/.gateway-token" ]]; then
+    GATEWAY_TOKEN=$(cat "${HOME}/.gateway-token")
+fi
+
 # Start OpenClaw gateway
-exec openclaw gateway --port 18789 --bind lan --allow-unconfigured
+if [[ -n "${GATEWAY_TOKEN}" ]]; then
+    exec openclaw gateway --port 18789 --bind lan --allow-unconfigured --token "${GATEWAY_TOKEN}"
+else
+    bashio::log.error "Gateway token not found!"
+    exit 1
+fi
