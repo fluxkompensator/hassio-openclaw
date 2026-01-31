@@ -43,6 +43,9 @@ fi
 
 bashio::log.info "Gateway token configured"
 
+# Log gateway token for user reference
+bashio::log.info "Gateway token: ${GATEWAY_TOKEN}"
+
 # Generate OpenClaw configuration
 cat > "${OPENCLAW_HOME}/openclaw.json" << EOF
 {
@@ -54,9 +57,14 @@ cat > "${OPENCLAW_HOME}/openclaw.json" << EOF
     "port": 18789,
     "bind": "lan",
     "mode": "local",
+    "trustedProxies": ["172.30.32.0/23", "127.0.0.1", "::1"],
     "auth": {
       "mode": "token",
       "token": "${GATEWAY_TOKEN}"
+    },
+    "controlUi": {
+      "enabled": true,
+      "allowInsecureAuth": true
     }
   },
   "workspace": "${WORKSPACE_PATH}",

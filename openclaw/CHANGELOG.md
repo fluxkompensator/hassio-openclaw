@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7] - 2026-01-31
+
+### Fixed
+- Add trustedProxies for HA ingress proxy
+- Enable controlUi with allowInsecureAuth for reverse proxy
+- Log gateway token for debugging
+
 ## [0.1.6] - 2026-01-31
 
 ### Fixed
