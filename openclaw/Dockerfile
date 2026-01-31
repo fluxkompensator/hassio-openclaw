@@ -32,11 +32,38 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget apt-transp
 COPY --from=signal-cli-source /opt/signal-cli-* /opt/signal-cli/
 RUN ln -s /opt/signal-cli/bin/signal-cli /usr/local/bin/signal-cli
 
+# Install sherpa-onnx for voice transcription
+ARG SHERPA_VERSION=1.12.20
+RUN ARCH=$(uname -m) \
+    && if [ "$ARCH" = "x86_64" ]; then \
+         SHERPA_ARCH="x86_64"; \
+       elif [ "$ARCH" = "aarch64" ]; then \
+         SHERPA_ARCH="aarch64"; \
+       else \
+         echo "Unsupported architecture: $ARCH" && exit 1; \
+       fi \
+    && curl -L -o /tmp/sherpa-onnx.tar.bz2 \
+       "https://github.com/k2-fsa/sherpa-onnx/releases/download/v${SHERPA_VERSION}/sherpa-onnx-v${SHERPA_VERSION}-linux-${SHERPA_ARCH}-shared.tar.bz2" \
+    && tar xf /tmp/sherpa-onnx.tar.bz2 -C /opt \
+    && rm /tmp/sherpa-onnx.tar.bz2
+
+# Download whisper small model for transcription
+RUN mkdir -p /opt/whisper-models \
+    && curl -L -o /opt/whisper-models/small-encoder.onnx \
+       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/whisper-small-encoder.onnx" \
+    && curl -L -o /opt/whisper-models/small-decoder.onnx \
+       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/whisper-small-decoder.onnx" \
+    && curl -L -o /opt/whisper-models/small-tokens.txt \
+       "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/whisper-small-tokens.txt"
+
 # Install OpenClaw globally
 RUN npm install -g openclaw@latest
 
 # Copy root filesystem
 COPY rootfs /
+
+# Make sherpa-onnx wrapper script executable
+RUN chmod +x /usr/local/bin/sherpa-onnx-offline
 
 # Install Signal setup web UI dependencies
 RUN cd /opt/signal-setup-web && npm install --omit=dev
@@ -52,4 +79,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.2.0"
+    io.hass.version="0.2.13"

@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.13] - 2026-01-31
+
+### Added
+- Voice message transcription support via sherpa-onnx
+- Pre-installed Whisper small model (~500MB) for accurate offline transcription
+- Automatic architecture detection (x86_64/aarch64) for sherpa-onnx binaries
+- OpenClaw auto-detects sherpa-onnx-offline CLI for transcription
+
+### Notes
+- Transcription happens locally, no API calls needed
+- Supports multiple languages automatically
+- Voice messages sent via Signal are now transcribed and processed by Claude
+
 ## [0.2.10] - 2026-01-31
 
 ### Fixed
