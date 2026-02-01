@@ -57,11 +57,8 @@ RUN curl -fSL -o /tmp/whisper-model.tar.bz2 \
     && tar xjf /tmp/whisper-model.tar.bz2 -C /opt \
     && rm /tmp/whisper-model.tar.bz2
 
-# Install OpenClaw globally
-RUN npm install -g openclaw@latest
-
-# Install ha-mcp MCP server for Home Assistant integration
-RUN npm install -g @anthropic-ai/ha-mcp || npm install -g ha-mcp
+# Install OpenClaw and ClawHub CLI globally
+RUN npm install -g openclaw@latest clawhub
 
 # Copy root filesystem
 COPY rootfs /
@@ -84,4 +81,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.2.33"
+    io.hass.version="0.2.34"

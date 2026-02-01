@@ -137,24 +137,6 @@ TTS_EOF
 )
 fi
 
-# Build MCP servers config for Home Assistant integration
-bashio::log.info "Configuring ha-mcp MCP server for Home Assistant..."
-MCP_CONFIG=$(cat << MCP_EOF
-  "mcp": {
-    "servers": [
-      {
-        "name": "homeassistant",
-        "command": "ha-mcp",
-        "env": {
-          "HOMEASSISTANT_URL": "${HA_URL}",
-          "HOMEASSISTANT_TOKEN": "${HA_TOKEN}"
-        }
-      }
-    ]
-  },
-MCP_EOF
-)
-
 cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
 {
   "env": {
@@ -173,7 +155,6 @@ cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
       }
     }
   },
-${MCP_CONFIG}
 ${AUDIO_CONFIG}
 ${TTS_CONFIG}
 ${SIGNAL_CHANNEL_CONFIG}
@@ -209,6 +190,36 @@ EOF
     echo "SIGNAL_TRANSCRIPTION=${VOICE_TRANSCRIPTION}"
 } > /var/run/s6/container_environment/openclaw-env
 
+# Install Home Assistant skills
+SKILL_DIR="${OPENCLAW_HOME}/.openclaw/skills"
+mkdir -p "${SKILL_DIR}"
+
+# Install bundled HA skill (optimized for addon environment)
+if [[ ! -d "${SKILL_DIR}/homeassistant-addon" ]]; then
+    cp -r /opt/ha-skill "${SKILL_DIR}/homeassistant-addon"
+    bashio::log.info "Installed homeassistant-addon skill"
+fi
+
+# Install community HA skills from ClawHub (if clawhub available)
+if command -v clawhub &> /dev/null; then
+    bashio::log.info "Installing Home Assistant skills from ClawHub..."
+    cd "${OPENCLAW_HOME}" || exit 1
+
+    # Install iAhmadZain's skill (REST API + webhooks)
+    if [[ ! -d "${SKILL_DIR}/home-assistant" ]]; then
+        clawhub install iAhmadZain/home-assistant --workdir "${SKILL_DIR}" 2>/dev/null || \
+            bashio::log.debug "Could not install iAhmadZain/home-assistant skill"
+    fi
+
+    # Install dbhurley's skill (smart plugs, lights, scenes)
+    if [[ ! -d "${SKILL_DIR}/homeassistant" ]]; then
+        clawhub install dbhurley/homeassistant --workdir "${SKILL_DIR}" 2>/dev/null || \
+            bashio::log.debug "Could not install dbhurley/homeassistant skill"
+    fi
+else
+    bashio::log.debug "clawhub CLI not available, skipping community skills"
+fi
+
 # Create workspace bootstrap files (only if missing - preserves user customizations)
 create_if_missing() {
     local file="$1"
@@ -226,46 +237,28 @@ create_if_missing "AGENTS.md" "# Home Assistant Voice Assistant
 
 You are a Home Assistant voice assistant running via OpenClaw. Your primary purpose is controlling smart home devices.
 
-## Available MCP Tools
+## Skills Available
 
-You have access to Home Assistant via the \`homeassistant\` MCP server with 97+ tools. Key tools include:
+You have Home Assistant skills installed. Use the \`homeassistant-addon\` skill for API reference.
 
-### Entity Discovery
-- \`search_entities\` - Find entities by name, area, or type
-- \`get_entity_state\` - Get current state of an entity
-- \`get_entities\` - List entities (filter by domain)
+## Quick Reference
 
-### Device Control
-- \`call_service\` - Call any HA service (light.turn_on, switch.turn_off, etc.)
-- \`set_entity_state\` - Directly set entity state
+Environment variables are pre-configured:
+- \\\$HA_URL = http://supervisor/core
+- \\\$HA_TOKEN = authentication token
 
-### Areas & Zones
-- \`get_areas\` - List all areas
-- \`get_area_entities\` - Get entities in a specific area
-- \`get_floors\` - List floors
-- \`get_zones\` - List zones
-
-### Automations & Scripts
-- \`trigger_automation\` - Manually trigger automations
-- \`run_script\` - Execute HA scripts
-- \`create_automation\` - Create new automations
-
-### History & Stats
-- \`get_history\` - Get entity state history
-- \`get_statistics\` - Get entity statistics
-
-## Usage Tips
-
-1. **Search first** - Use \`search_entities\` to find entities by room name
-2. **Use areas** - Query by area for room-based commands (\"bathroom lights\")
-3. **Direct control** - Use \`call_service\` with known entity_id
+Common patterns:
+- **Get state**: curl -s -H \"Authorization: Bearer \\\$HA_TOKEN\" \"\\\$HA_URL/api/states/{entity_id}\"
+- **Call service**: curl -s -X POST with JSON body to \\\$HA_URL/api/services/{domain}/{service}
+- **Search by area**: Use Template API with area_entities(\"room_name\")
 
 ## Operating Guidelines
 
 1. **Be concise** - Voice responses should be short and natural
-2. **Confirm actions** - \"Turning on the living room light\"
-3. **Handle errors gracefully** - \"I couldn't find that device\"
-4. **Remember context** - If user says \"turn it off\", know what \"it\" refers to"
+2. **Search by area** - Users say \"bathroom light\" not entity IDs
+3. **Confirm actions** - \"Turning on the bathroom light\"
+4. **Handle errors gracefully** - \"I couldn't find that device\"
+5. **Remember context** - If user says \"turn it off\", know what \"it\" refers to"
 
 # SOUL.md - Persona and behavioral boundaries
 create_if_missing "SOUL.md" "# Personality
@@ -287,26 +280,28 @@ You are a helpful, efficient home assistant. You speak naturally and concisely, 
 # TOOLS.md - Tool usage notes and patterns
 create_if_missing "TOOLS.md" "# Tool Usage Guidelines
 
-## Home Assistant MCP Server
+## Home Assistant Control
 
-You have 97+ HA tools via the \`homeassistant\` MCP server.
+Use the \`homeassistant-addon\` skill for full API documentation. Quick reference:
 
-### Efficient Patterns
-- **Find by name/area**: \`search_entities\` with fuzzy matching
-- **Get state**: \`get_entity_state\` for specific entity
-- **Control**: \`call_service\` with domain.action and entity_id
-- **By room**: \`get_area_entities\` for area-based queries
+### Service Domains
+- light: turn_on, turn_off, toggle
+- switch: turn_on, turn_off, toggle
+- climate: set_temperature, set_hvac_mode
+- cover: open_cover, close_cover, set_cover_position
+- automation: trigger, turn_on, turn_off
+- script: turn_on
+- scene: turn_on
+- media_player: media_play_pause, volume_set
 
-### Common Service Calls
-- \`light.turn_on\`, \`light.turn_off\`
-- \`switch.turn_on\`, \`switch.turn_off\`
-- \`climate.set_temperature\`
-- \`cover.open_cover\`, \`cover.close_cover\`
-- \`script.turn_on\` (to run scripts)
-- \`automation.trigger\` (to trigger automations)
+### Area-Based Queries (Recommended)
+Use Template API to find entities by room:
+\\\`\\\`\\\`
+{{ area_entities(\"bathroom\") | select(\"match\", \"light.*\") | list }}
+\\\`\\\`\\\`
 
 ### Entity ID Patterns
-Common domains: \`light.\`, \`switch.\`, \`climate.\`, \`cover.\`, \`script.\`, \`automation.\`"
+Common domains: light., switch., climate., cover., script., automation., sensor., binary_sensor."
 
 # IDENTITY.md - Agent name and character
 create_if_missing "IDENTITY.md" "name: Assistant
