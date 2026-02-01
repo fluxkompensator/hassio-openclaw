@@ -312,15 +312,35 @@ mkdir -p "${AGENT_DIR}"
 CLAUDE_OAUTH=$(bashio::config 'claude_oauth_credentials')
 
 if [[ -n "${CLAUDE_OAUTH}" ]]; then
-    # OAuth mode - write credentials file and sync
+    # OAuth mode - parse Claude credentials and create auth-profiles.json
     bashio::log.info "Using Claude OAuth credentials from config"
-    mkdir -p "${OPENCLAW_HOME}/.claude"
-    echo "${CLAUDE_OAUTH}" > "${OPENCLAW_HOME}/.claude/.credentials.json"
-    chmod 600 "${OPENCLAW_HOME}/.claude/.credentials.json"
 
-    # Sync OAuth token into OpenClaw auth profiles
-    cd "${OPENCLAW_HOME}" && HOME="${OPENCLAW_HOME}" openclaw models auth setup-token --provider anthropic --yes || \
-        bashio::log.warning "Failed to sync OAuth credentials"
+    # Parse OAuth fields from Claude credentials JSON
+    ACCESS_TOKEN=$(echo "${CLAUDE_OAUTH}" | jq -r '.accessToken // empty')
+    REFRESH_TOKEN=$(echo "${CLAUDE_OAUTH}" | jq -r '.refreshToken // empty')
+    EXPIRES_AT=$(echo "${CLAUDE_OAUTH}" | jq -r '.expiresAt // empty')
+
+    if [[ -n "${ACCESS_TOKEN}" ]]; then
+        # Create OAuth auth-profiles.json
+        cat > "${AGENT_DIR}/auth-profiles.json" << EOF
+{
+  "version": 1,
+  "profiles": {
+    "anthropic:oauth": {
+      "type": "oauth",
+      "provider": "anthropic",
+      "accessToken": "${ACCESS_TOKEN}",
+      "refreshToken": "${REFRESH_TOKEN}",
+      "expiresAt": ${EXPIRES_AT:-0}
+    }
+  }
+}
+EOF
+        chmod 600 "${AGENT_DIR}/auth-profiles.json"
+        bashio::log.info "OAuth credentials configured (expires: ${EXPIRES_AT})"
+    else
+        bashio::log.error "Invalid OAuth credentials JSON - missing accessToken"
+    fi
 
 elif bashio::config.has_value 'anthropic_api_key'; then
     # API key mode (existing behavior)
