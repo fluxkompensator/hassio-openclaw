@@ -150,8 +150,8 @@ cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
       },
       "contextPruning": {
         "mode": "cache-ttl",
-        "ttl": "15m",
-        "keepLastAssistants": 2
+        "ttl": "5m",
+        "keepLastAssistants": 1
       }
     }
   },
@@ -200,25 +200,7 @@ if [[ ! -d "${SKILL_DIR}/homeassistant-addon" ]]; then
     bashio::log.info "Installed homeassistant-addon skill"
 fi
 
-# Install community HA skills from ClawHub (if clawhub available)
-if command -v clawhub &> /dev/null; then
-    bashio::log.info "Installing Home Assistant skills from ClawHub..."
-    cd "${OPENCLAW_HOME}" || exit 1
-
-    # Install iAhmadZain's skill (REST API + webhooks)
-    if [[ ! -d "${SKILL_DIR}/home-assistant" ]]; then
-        clawhub install iAhmadZain/home-assistant --workdir "${SKILL_DIR}" 2>/dev/null || \
-            bashio::log.debug "Could not install iAhmadZain/home-assistant skill"
-    fi
-
-    # Install dbhurley's skill (smart plugs, lights, scenes)
-    if [[ ! -d "${SKILL_DIR}/homeassistant" ]]; then
-        clawhub install dbhurley/homeassistant --workdir "${SKILL_DIR}" 2>/dev/null || \
-            bashio::log.debug "Could not install dbhurley/homeassistant skill"
-    fi
-else
-    bashio::log.debug "clawhub CLI not available, skipping community skills"
-fi
+# ClawHub skills removed - unknown token cost, redundant with bundled skill
 
 # Create workspace bootstrap files (only if missing - preserves user customizations)
 create_if_missing() {
@@ -237,28 +219,34 @@ create_if_missing "AGENTS.md" "# Home Assistant Voice Assistant
 
 You are a Home Assistant voice assistant running via OpenClaw. Your primary purpose is controlling smart home devices.
 
-## Skills Available
+## CRITICAL: Token Efficiency
 
-You have Home Assistant skills installed. Use the \`homeassistant-addon\` skill for API reference.
+**API calls cost tokens. Follow these rules to avoid burning \$\$\$:**
 
-## Quick Reference
+1. **NEVER call /api/states** - Returns ALL entities, wastes 100K+ tokens
+2. **Don't query before acting** - For \"turn on bathroom light\" → just call the service
+3. **Use Template API for searches** - Returns only entity IDs (tiny response)
+4. **Single entity queries only** - /api/states/light.specific_one is OK
 
-Environment variables are pre-configured:
+## Environment
+
 - \\\$HA_URL = http://supervisor/core
 - \\\$HA_TOKEN = authentication token
 
-Common patterns:
-- **Get state**: curl -s -H \"Authorization: Bearer \\\$HA_TOKEN\" \"\\\$HA_URL/api/states/{entity_id}\"
-- **Call service**: curl -s -X POST with JSON body to \\\$HA_URL/api/services/{domain}/{service}
-- **Search by area**: Use Template API with area_entities(\"room_name\")
+## Patterns
 
-## Operating Guidelines
+**Control device (no query needed):**
+curl -sX POST -H \"Authorization: Bearer \\\$HA_TOKEN\" -H \"Content-Type: application/json\" -d '{\"entity_id\": \"light.bathroom\"}' \"\\\$HA_URL/api/services/light/turn_on\"
+
+**Find by area (token-efficient):**
+curl -sX POST -H \"Authorization: Bearer \\\$HA_TOKEN\" -H \"Content-Type: application/json\" -d '{\"template\": \"{{ area_entities(\\\"bathroom\\\") }}\"}' \"\\\$HA_URL/api/template\"
+
+## Guidelines
 
 1. **Be concise** - Voice responses should be short and natural
 2. **Search by area** - Users say \"bathroom light\" not entity IDs
 3. **Confirm actions** - \"Turning on the bathroom light\"
-4. **Handle errors gracefully** - \"I couldn't find that device\"
-5. **Remember context** - If user says \"turn it off\", know what \"it\" refers to"
+4. **Handle errors gracefully** - \"I couldn't find that device\""
 
 # SOUL.md - Persona and behavioral boundaries
 create_if_missing "SOUL.md" "# Personality

@@ -57,8 +57,8 @@ RUN curl -fSL -o /tmp/whisper-model.tar.bz2 \
     && tar xjf /tmp/whisper-model.tar.bz2 -C /opt \
     && rm /tmp/whisper-model.tar.bz2
 
-# Install OpenClaw and ClawHub CLI globally
-RUN npm install -g openclaw@latest clawhub
+# Install OpenClaw globally (clawhub removed to reduce image size)
+RUN npm install -g openclaw@latest
 
 # Copy root filesystem
 COPY rootfs /
