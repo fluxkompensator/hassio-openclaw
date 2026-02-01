@@ -337,17 +337,15 @@ if [[ -n "${CLAUDE_OAUTH}" ]]; then
     fi
 
     if [[ -n "${ACCESS_TOKEN}" ]]; then
-        # Create OAuth auth-profiles.json
+        # Create auth-profiles.json - use same format as API key but with OAuth token
         cat > "${AGENT_DIR}/auth-profiles.json" << EOF
 {
   "version": 1,
   "profiles": {
     "anthropic:oauth": {
-      "type": "oauth",
+      "type": "token",
       "provider": "anthropic",
-      "accessToken": "${ACCESS_TOKEN}",
-      "refreshToken": "${REFRESH_TOKEN}",
-      "expiresAt": ${EXPIRES_AT:-0}
+      "token": "${ACCESS_TOKEN}"
     }
   }
 }
