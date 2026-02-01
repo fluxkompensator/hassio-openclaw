@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:openclaw.ai)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "WebFetch(domain:docs.openclaw.ai)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd OpenClaw addon design document\n\nInitial design for Home Assistant addon that runs OpenClaw.ai with:\n- Ingress web UI access\n- Voice integration via REST commands\n- Bidirectional HA device control\n- Anthropic Claude as LLM provider\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)",
+      "Bash(chmod:*)",
+      "Bash(git -C /home/void/projects/hassio/addons/openclaw status)",
+      "Bash(git -C /home/void/projects/hassio/addons/openclaw diff)",
+      "Bash(git -C /home/void/projects/hassio/addons/openclaw log --oneline -5)",
+      "Bash(git -C /home/void/projects/hassio/addons/openclaw add:*)",
+      "Bash(git -C /home/void/projects/hassio/addons/openclaw commit -m \"$\\(cat <<''EOF''\nfeat: add Home Assistant skill for OpenClaw\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /home/void/projects/hassio/addons/openclaw commit -m \"$\\(cat <<''EOF''\ndocs: add user documentation for addon setup\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /home/void/projects/hassio/addons/openclaw commit -m \"$\\(cat <<''EOF''\ndocs: add README, CHANGELOG, and .gitignore\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /home/void/projects/hassio/addons/openclaw log --oneline -3)",
+      "Bash(git tag:*)",
+      "Bash(python3:*)",
+      "Bash(git remote set-url:*)",
+      "WebFetch(domain:community.home-assistant.io)",
+      "Bash(git push)",
+      "Bash(ssh-add:*)",
+      "WebFetch(domain:www.answeroverflow.com)",
+      "Bash(GIT_SSH_COMMAND='ssh -i /home/void/projects/hassio/addons/openclaw/.ssh/claude -o IdentitiesOnly=yes' git push:*)",
+      "Bash(GIT_SSH_COMMAND=\"ssh -i /home/void/projects/hassio/addons/openclaw/.ssh/claude -o IdentitiesOnly=yes\" git push:*)",
+      "Bash(curl:*)",
+      "Bash(xargs cat:*)",
+      "Bash(find:*)",
+      "Bash(tar:*)",
+      "Bash(ssh:*)"
+    ]
+  }
+}

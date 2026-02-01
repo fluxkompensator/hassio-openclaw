@@ -1,0 +1,2 @@
+usage_date_utc,model_version,api_key,workspace,usage_type,context_window,usage_input_tokens_no_cache,usage_input_tokens_cache_write_5m,usage_input_tokens_cache_write_1h,usage_input_tokens_cache_read,usage_output_tokens,web_search_count
+2026-02-01,claude-opus-4-5-20251101,hassio,Default,standard,≤ 200k,436,414433,0,645199,8042,0

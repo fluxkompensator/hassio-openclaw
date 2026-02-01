@@ -315,10 +315,21 @@ if [[ -n "${CLAUDE_OAUTH}" ]]; then
     # OAuth mode - parse Claude credentials and create auth-profiles.json
     bashio::log.info "Using Claude OAuth credentials from config"
 
+    # Clean up the JSON - remove potential escaping issues from HA config
+    CLAUDE_OAUTH_CLEAN=$(echo "${CLAUDE_OAUTH}" | tr -d '\n\r' | sed 's/^"//;s/"$//')
+
+    # Validate JSON before parsing
+    if ! echo "${CLAUDE_OAUTH_CLEAN}" | jq -e . >/dev/null 2>&1; then
+        bashio::log.error "Invalid JSON in claude_oauth_credentials. First 50 chars:"
+        bashio::log.error "$(echo "${CLAUDE_OAUTH_CLEAN}" | head -c 50)"
+        bashio::log.error "Ensure you paste the raw JSON from ~/.claude/.credentials.json"
+        exit 1
+    fi
+
     # Parse OAuth fields from Claude credentials JSON
-    ACCESS_TOKEN=$(echo "${CLAUDE_OAUTH}" | jq -r '.accessToken // empty')
-    REFRESH_TOKEN=$(echo "${CLAUDE_OAUTH}" | jq -r '.refreshToken // empty')
-    EXPIRES_AT=$(echo "${CLAUDE_OAUTH}" | jq -r '.expiresAt // empty')
+    ACCESS_TOKEN=$(echo "${CLAUDE_OAUTH_CLEAN}" | jq -r '.accessToken // empty')
+    REFRESH_TOKEN=$(echo "${CLAUDE_OAUTH_CLEAN}" | jq -r '.refreshToken // empty')
+    EXPIRES_AT=$(echo "${CLAUDE_OAUTH_CLEAN}" | jq -r '.expiresAt // empty')
 
     if [[ -n "${ACCESS_TOKEN}" ]]; then
         # Create OAuth auth-profiles.json
