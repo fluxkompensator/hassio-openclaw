@@ -11,11 +11,12 @@ Control your smart home with natural language using [OpenClaw.ai](https://opencl
 
 ## Configuration
 
-### Required Settings
+### Authentication (Choose One)
 
 | Option | Description |
 |--------|-------------|
-| `anthropic_api_key` | Your Anthropic API key for Claude AI access |
+| `anthropic_api_key` | Anthropic API key from console.anthropic.com |
+| `claude_oauth_credentials` | OAuth credentials JSON from `claude setup-token` |
 
 ### Optional Settings
 
@@ -26,15 +27,38 @@ Control your smart home with natural language using [OpenClaw.ai](https://opencl
 | `signal_phone` | | Your Signal phone number (e.g., +15551234567) |
 | `voice_transcription` | `none` | Voice transcription engine: `sherpa-onnx`, `whisper`, or `none` |
 
-## Getting Your Anthropic API Key
+## Authentication Setup
+
+### Option 1: OAuth Credentials (Recommended)
+
+OAuth credentials provide automatic token refresh and better rate limits.
+
+1. **On your local machine**, install Claude CLI and authenticate:
+   ```bash
+   npm install -g @anthropic-ai/claude-code
+   claude setup-token
+   ```
+
+2. **Copy the credentials JSON:**
+   ```bash
+   cat ~/.claude/.credentials.json
+   ```
+
+3. **In Home Assistant:** Settings → Add-ons → OpenClaw → Configuration
+
+4. **Paste the entire JSON** into the `claude_oauth_credentials` field
+
+5. **Save and restart** the addon
+
+### Option 2: API Key
 
 1. Visit [console.anthropic.com](https://console.anthropic.com)
 2. Sign up for an account or log in
 3. Navigate to **API Keys** in the dashboard
 4. Click **Create Key**
-5. Copy the generated key and paste it into the addon configuration
+5. Copy the generated key and paste it into `anthropic_api_key`
 
-> **Note:** Keep your API key secure and never share it publicly.
+> **Note:** Keep your credentials secure and never share them publicly.
 
 ## Signal Voice Messages (Mobile Access)
 
@@ -150,6 +174,117 @@ OpenClaw understands natural language commands. Here are some examples:
 - **Verify REST command** - Check that the `rest_command.openclaw_chat` service exists in Developer Tools > Services
 - **Test the intent** - Use Developer Tools to manually trigger the intent script
 - **Check addon status** - Ensure the OpenClaw addon is running and accessible at the configured port
+
+## ESPHome Voice Satellite Integration
+
+Create a physical voice assistant device that connects to OpenClaw via Home Assistant Assist.
+
+**Flow**: Wake Word -> STT (local) -> OpenClaw/Claude -> TTS (Edge) -> Speaker
+
+### Hardware Options
+
+| Option | Price | Notes |
+|--------|-------|-------|
+| **ESP32-S3-BOX-3** | ~$45 | Recommended - all-in-one with mic, speaker, display |
+| M5Stack ATOM Echo | ~$13 | Budget - tiny, lower audio quality |
+| Custom Build | ~$25 | Best audio - ESP32-S3 + INMP441 + MAX98357 |
+
+### Quick Start (ESP32-S3-BOX-3)
+
+1. **Install ESPHome addon** in Home Assistant
+2. **Create new device** using the provided configuration:
+   - Copy `esphome/voice-satellite-s3box.yaml` to your ESPHome config
+   - Create `secrets.yaml` from the example template
+3. **Flash the device** via USB
+4. **Configure Assist pipeline** in Home Assistant:
+   - Settings -> Voice Assistants -> Add Assistant
+   - Set conversation agent to OpenClaw
+
+### Custom Build Setup
+
+For custom hardware (ESP32-S3 + INMP441 + MAX98357):
+
+1. Use `esphome/voice-satellite.yaml` configuration
+2. Adjust GPIO pins to match your wiring:
+   ```yaml
+   # Microphone (INMP441)
+   i2s_lrclk_pin: GPIO3   # WS
+   i2s_bclk_pin: GPIO2    # SCK
+   i2s_din_pin: GPIO4     # SD
+
+   # Speaker (MAX98357)
+   i2s_lrclk_pin: GPIO6   # WS
+   i2s_bclk_pin: GPIO5    # BCLK
+   i2s_dout_pin: GPIO7    # DIN
+   ```
+
+### OpenClaw Conversation Agent
+
+The addon includes a custom Home Assistant component that registers OpenClaw as a conversation agent. To install:
+
+1. **Copy the component** to your HA config:
+   ```bash
+   cp -r /homeassistant/custom_components/openclaw_agent \
+         /config/custom_components/
+   ```
+
+2. **Add to configuration.yaml**:
+   ```yaml
+   openclaw_agent:
+     url: "http://localhost:18789/api/chat"
+     token: !secret openclaw_token
+   ```
+
+3. **Add to secrets.yaml**:
+   ```yaml
+   openclaw_token: "your-gateway-token-from-addon-logs"
+   ```
+
+4. **Restart Home Assistant**
+
+5. **Configure Assist pipeline**:
+   - Settings -> Voice Assistants -> Add Assistant
+   - Select "OpenClaw" as the conversation agent
+   - Choose your preferred STT engine (Whisper, Sherpa-ONNX)
+   - TTS is handled by OpenClaw (Edge TTS)
+
+### Wake Words
+
+Available wake words:
+- "Hey Jarvis" (built into HA)
+- "OK Nabu" (HA custom)
+- Custom - train your own with openWakeWord
+
+### Testing
+
+1. **Test the API**:
+   ```bash
+   curl -X POST http://localhost:18789/api/chat \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer YOUR_TOKEN" \
+     -d '{"message": "Hello"}'
+   ```
+
+2. **Test conversation agent**:
+   - HA -> Developer Tools -> Services
+   - Call `conversation.process` with text input
+
+3. **Test voice satellite**:
+   - Say wake word
+   - LED lights up
+   - Speak your command
+   - Hear the response
+
+### LED Status Indicators
+
+| Color | Meaning |
+|-------|---------|
+| Green pulse | Wake word detected |
+| Blue | Listening |
+| Yellow pulse | Processing |
+| Purple | Speaking response |
+| Red | Error |
+| Orange pulse | Disconnected |
 
 ## Support
 

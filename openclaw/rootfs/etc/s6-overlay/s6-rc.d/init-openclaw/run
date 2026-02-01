@@ -305,11 +305,27 @@ Interaction style: Voice commands via Signal/HA Assist"
 
 bashio::log.info "Workspace bootstrap files configured"
 
-# Create auth-profiles.json for the main agent
+# Configure authentication (OAuth credentials or API key)
 AGENT_DIR="${OPENCLAW_HOME}/.openclaw/agents/main/agent"
 mkdir -p "${AGENT_DIR}"
 
-cat > "${AGENT_DIR}/auth-profiles.json" << EOF
+CLAUDE_OAUTH=$(bashio::config 'claude_oauth_credentials')
+
+if [[ -n "${CLAUDE_OAUTH}" ]]; then
+    # OAuth mode - write credentials file and sync
+    bashio::log.info "Using Claude OAuth credentials from config"
+    mkdir -p "${OPENCLAW_HOME}/.claude"
+    echo "${CLAUDE_OAUTH}" > "${OPENCLAW_HOME}/.claude/.credentials.json"
+    chmod 600 "${OPENCLAW_HOME}/.claude/.credentials.json"
+
+    # Sync OAuth token into OpenClaw auth profiles
+    cd "${OPENCLAW_HOME}" && HOME="${OPENCLAW_HOME}" openclaw models auth setup-token --provider anthropic --yes || \
+        bashio::log.warning "Failed to sync OAuth credentials"
+
+elif bashio::config.has_value 'anthropic_api_key'; then
+    # API key mode (existing behavior)
+    bashio::log.info "Using provided Anthropic API key"
+    cat > "${AGENT_DIR}/auth-profiles.json" << EOF
 {
   "version": 1,
   "profiles": {
@@ -321,8 +337,13 @@ cat > "${AGENT_DIR}/auth-profiles.json" << EOF
   }
 }
 EOF
+else
+    bashio::log.error "No authentication configured! Set either:"
+    bashio::log.error "  - anthropic_api_key (API key from console.anthropic.com)"
+    bashio::log.error "  - claude_oauth_credentials (JSON from claude setup-token)"
+fi
 
-bashio::log.info "Anthropic API key configured"
+bashio::log.info "Authentication configured"
 
 # Run openclaw doctor --fix if Signal is enabled to apply channel changes
 if bashio::var.true "${SIGNAL_ENABLED}"; then
