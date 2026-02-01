@@ -57,8 +57,8 @@ RUN curl -fSL -o /tmp/whisper-model.tar.bz2 \
     && tar xjf /tmp/whisper-model.tar.bz2 -C /opt \
     && rm /tmp/whisper-model.tar.bz2
 
-# Install OpenClaw and Claude CLI globally
-RUN npm install -g openclaw@latest @anthropic-ai/claude-code
+# Install OpenClaw globally
+RUN npm install -g openclaw@latest
 
 # Copy root filesystem
 COPY rootfs /
@@ -81,4 +81,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.2.40"
+    io.hass.version="0.3.1"

@@ -30,7 +30,6 @@ fi
 # Get configuration values
 ANTHROPIC_API_KEY=$(bashio::config 'anthropic_api_key')
 HA_ACCESS_TOKEN=$(bashio::config 'ha_access_token')
-LOG_LEVEL=$(bashio::config 'log_level')
 WORKSPACE_PATH=$(bashio::config 'workspace_path')
 SIGNAL_ENABLED=$(bashio::config 'signal_enabled')
 SIGNAL_PHONE=$(bashio::config 'signal_phone')
@@ -120,7 +119,7 @@ fi
 
 # Build TTS config for German voice (Edge TTS)
 TTS_CONFIG=""
-if bashio::config.has_value 'tts_voice' || [[ -n "${TTS_VOICE}" ]]; then
+if [[ -n "${TTS_VOICE}" ]]; then
     TTS_VOICE_FINAL="${TTS_VOICE:-de-DE-ConradNeural}"
     bashio::log.info "TTS configured: Edge with voice ${TTS_VOICE_FINAL}"
     TTS_CONFIG=$(cat << TTS_EOF
@@ -199,8 +198,6 @@ if [[ ! -d "${SKILL_DIR}/homeassistant-addon" ]]; then
     cp -r /opt/ha-skill "${SKILL_DIR}/homeassistant-addon"
     bashio::log.info "Installed homeassistant-addon skill"
 fi
-
-# ClawHub skills removed - unknown token cost, redundant with bundled skill
 
 # Create workspace bootstrap files (only if missing - preserves user customizations)
 create_if_missing() {
@@ -323,13 +320,9 @@ if [[ -n "${CLAUDE_OAUTH}" ]]; then
         # Raw token pasted directly - use as access token
         bashio::log.info "Detected raw OAuth token format"
         ACCESS_TOKEN="${CLAUDE_OAUTH_CLEAN}"
-        REFRESH_TOKEN=""
-        EXPIRES_AT="0"
     elif echo "${CLAUDE_OAUTH_CLEAN}" | jq -e . >/dev/null 2>&1; then
-        # Valid JSON - parse fields
+        # Valid JSON - parse accessToken field
         ACCESS_TOKEN=$(echo "${CLAUDE_OAUTH_CLEAN}" | jq -r '.accessToken // empty')
-        REFRESH_TOKEN=$(echo "${CLAUDE_OAUTH_CLEAN}" | jq -r '.refreshToken // empty')
-        EXPIRES_AT=$(echo "${CLAUDE_OAUTH_CLEAN}" | jq -r '.expiresAt // empty')
     else
         bashio::log.error "Invalid claude_oauth_credentials format"
         bashio::log.error "Paste either the raw token (sk-ant-...) or JSON from ~/.claude/.credentials.json"
@@ -351,7 +344,7 @@ if [[ -n "${CLAUDE_OAUTH}" ]]; then
 }
 EOF
         chmod 600 "${AGENT_DIR}/auth-profiles.json"
-        bashio::log.info "OAuth credentials configured (expires: ${EXPIRES_AT})"
+        bashio::log.info "OAuth credentials configured"
     else
         bashio::log.error "Invalid OAuth credentials JSON - missing accessToken"
     fi

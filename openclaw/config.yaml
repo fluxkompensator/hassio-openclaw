@@ -3,7 +3,7 @@
 
 name: "OpenClaw"
 description: "OpenClaw.ai personal AI assistant with Home Assistant integration"
-version: "0.2.40"
+version: "0.3.1"
 slug: "openclaw"
 url: "https://github.com/openclaw/openclaw"
 
@@ -44,7 +44,6 @@ options:
   anthropic_api_key: ""
   claude_oauth_credentials: ""
   ha_access_token: ""
-  log_level: "info"
   workspace_path: "/share/openclaw"
   signal_enabled: false
   signal_phone: ""
@@ -57,7 +56,6 @@ schema:
   anthropic_api_key: "password?"
   claude_oauth_credentials: "password?"
   ha_access_token: "password?"
-  log_level: list(debug|info|warn|error)
   workspace_path: str
   signal_enabled: bool
   signal_phone: "str?"
