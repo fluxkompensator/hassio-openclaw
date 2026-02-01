@@ -140,18 +140,18 @@ fi
 # Build MCP servers config for Home Assistant integration
 bashio::log.info "Configuring ha-mcp MCP server for Home Assistant..."
 MCP_CONFIG=$(cat << MCP_EOF
-"mcp": {
-        "servers": [
-          {
-            "name": "homeassistant",
-            "command": "ha-mcp",
-            "env": {
-              "HOMEASSISTANT_URL": "${HA_URL}",
-              "HOMEASSISTANT_TOKEN": "${HA_TOKEN}"
-            }
-          }
-        ]
+  "mcp": {
+    "servers": [
+      {
+        "name": "homeassistant",
+        "command": "ha-mcp",
+        "env": {
+          "HOMEASSISTANT_URL": "${HA_URL}",
+          "HOMEASSISTANT_TOKEN": "${HA_TOKEN}"
+        }
       }
+    ]
+  },
 MCP_EOF
 )
 
@@ -170,10 +170,10 @@ cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
         "mode": "cache-ttl",
         "ttl": "15m",
         "keepLastAssistants": 2
-      },
-      ${MCP_CONFIG}
+      }
     }
   },
+${MCP_CONFIG}
 ${AUDIO_CONFIG}
 ${TTS_CONFIG}
 ${SIGNAL_CHANNEL_CONFIG}

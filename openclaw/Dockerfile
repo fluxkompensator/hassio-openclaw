@@ -84,4 +84,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.2.32"
+    io.hass.version="0.2.33"
