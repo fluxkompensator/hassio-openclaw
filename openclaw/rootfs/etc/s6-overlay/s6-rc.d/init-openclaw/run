@@ -179,7 +179,7 @@ EOF
 {
     echo "HA_TOKEN=${HA_TOKEN}"
     echo "HA_URL=${HA_URL}"
-    echo "OPENCLAW_CONFIG_DIR=${OPENCLAW_HOME}"
+    echo "OPENCLAW_STATE_DIR=${OPENCLAW_HOME}/.openclaw"
     echo "OPENCLAW_WORKSPACE_DIR=${WORKSPACE_PATH}"
     echo "HOME=${OPENCLAW_HOME}"
     echo "OPENCLAW_GATEWAY_TOKEN=${GATEWAY_TOKEN}"
@@ -190,8 +190,8 @@ EOF
     echo "SIGNAL_TRANSCRIPTION=${VOICE_TRANSCRIPTION}"
 } > /var/run/s6/container_environment/openclaw-env
 
-# Install HA skill to OpenClaw
-SKILL_DIR="${OPENCLAW_HOME}/skills/homeassistant"
+# Install HA skill to OpenClaw (managed skills directory)
+SKILL_DIR="${OPENCLAW_HOME}/.openclaw/skills/homeassistant"
 mkdir -p "${SKILL_DIR}"
 cp -r /opt/openclaw-ha-skill/* "${SKILL_DIR}/"
 
