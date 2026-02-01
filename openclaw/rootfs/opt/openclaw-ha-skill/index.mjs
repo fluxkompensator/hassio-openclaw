@@ -6,7 +6,17 @@
 const HA_URL = process.env.HA_URL || 'http://supervisor/core';
 const HA_TOKEN = process.env.HA_TOKEN || process.env.SUPERVISOR_TOKEN;
 
+// Debug timing instrumentation
+let requestCounter = 0;
+function log(msg) {
+  console.error(`[ha-skill ${new Date().toISOString()}] ${msg}`);
+}
+
 async function haFetch(endpoint, options = {}) {
+  const start = Date.now();
+  const reqId = ++requestCounter;
+  const method = options.method || 'GET';
+
   const url = `${HA_URL}${endpoint}`;
   const response = await fetch(url, {
     ...options,
@@ -21,7 +31,9 @@ async function haFetch(endpoint, options = {}) {
     throw new Error(`HA API error: ${response.status} ${response.statusText}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  log(`[${reqId}] ${method} ${endpoint} completed in ${Date.now() - start}ms`);
+  return result;
 }
 
 export async function getStates() {
@@ -77,8 +89,9 @@ export async function runScript(entityId) {
 }
 
 export async function listDevices() {
+  const start = Date.now();
   const states = await getStates();
-  return states
+  const devices = states
     .filter(s => !s.entity_id.startsWith('persistent_notification.'))
     .map(s => ({
       entity_id: s.entity_id,
@@ -86,6 +99,8 @@ export async function listDevices() {
       state: s.state,
       domain: s.entity_id.split('.')[0],
     }));
+  log(`listDevices: ${devices.length} entities, total ${Date.now() - start}ms`);
+  return devices;
 }
 
 export async function findEntities(query) {

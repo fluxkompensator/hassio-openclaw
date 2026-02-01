@@ -2,11 +2,20 @@
 # Wrapper script for sherpa-onnx that converts any audio format to WAV first
 # Usage: transcribe-audio <input-audio-file>
 
+# Timing instrumentation for performance debugging
+START_TIME=$(date +%s.%N)
+log_timing() {
+    echo "[transcribe $(date -Is)] $1" >&2
+}
+
 INPUT_FILE="$1"
 if [[ -z "$INPUT_FILE" || ! -f "$INPUT_FILE" ]]; then
     echo "Error: Input file not found: $INPUT_FILE" >&2
     exit 1
 fi
+
+FILE_SIZE=$(stat -c%s "$INPUT_FILE" 2>/dev/null || stat -f%z "$INPUT_FILE" 2>/dev/null || echo "unknown")
+log_timing "Starting: $INPUT_FILE ($FILE_SIZE bytes)"
 
 # Find sherpa-onnx binary (architecture-independent)
 SHERPA_BIN=""
@@ -49,6 +58,10 @@ OUTPUT=$("$SHERPA_BIN" \
 # Extract text from JSON line (sherpa outputs: {"lang": "...", "text": "...", ...})
 # Use grep to find the JSON line, then extract the text field
 TEXT=$(echo "$OUTPUT" | grep '"text"' | sed 's/.*"text": *"//;s/".*//')
+
+END_TIME=$(date +%s.%N)
+DURATION=$(echo "$END_TIME - $START_TIME" | bc 2>/dev/null || echo "N/A")
+log_timing "Completed in ${DURATION}s"
 
 if [[ -n "$TEXT" ]]; then
     echo "$TEXT"

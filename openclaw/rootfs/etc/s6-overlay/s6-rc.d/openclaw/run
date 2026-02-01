@@ -27,7 +27,8 @@ fi
 
 # Start OpenClaw gateway
 if [[ -n "${GATEWAY_TOKEN}" ]]; then
-    exec openclaw gateway --port 18789 --bind lan --allow-unconfigured --token "${GATEWAY_TOKEN}"
+    bashio::log.info "Starting gateway with verbose logging for performance debugging"
+    exec openclaw gateway --port 18789 --bind lan --allow-unconfigured --token "${GATEWAY_TOKEN}" --verbose
 else
     bashio::log.error "Gateway token not found!"
     exit 1
