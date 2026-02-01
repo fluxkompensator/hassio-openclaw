@@ -144,13 +144,14 @@ cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
   },
   "agents": {
     "defaults": {
+      "workspace": "${WORKSPACE_PATH}",
       "model": {
         "primary": "anthropic/claude-opus-4-5"
       },
       "contextPruning": {
         "mode": "cache-ttl",
-        "ttl": "30m",
-        "keepLastAssistants": 5
+        "ttl": "15m",
+        "keepLastAssistants": 2
       }
     }
   },
@@ -196,6 +197,89 @@ cp -r /opt/openclaw-ha-skill/* "${SKILL_DIR}/"
 
 bashio::log.info "Home Assistant skill installed"
 
+# Create workspace bootstrap files (only if missing - preserves user customizations)
+create_if_missing() {
+    local file="$1"
+    local content="$2"
+    if [[ ! -f "${WORKSPACE_PATH}/${file}" ]]; then
+        echo "${content}" > "${WORKSPACE_PATH}/${file}"
+        bashio::log.info "Created ${file}"
+    else
+        bashio::log.debug "${file} already exists, skipping"
+    fi
+}
+
+# AGENTS.md - Operating instructions and memory
+create_if_missing "AGENTS.md" "# Home Assistant Voice Assistant
+
+You are a Home Assistant voice assistant running via OpenClaw. Your primary purpose is controlling smart home devices.
+
+## Available Tools
+
+You have access to the \`homeassistant\` skill with these tools:
+- \`ha_list_devices\` - List all available devices (use sparingly, cache results mentally)
+- \`ha_get_states\` - Get all entity states
+- \`ha_get_state\` - Get specific entity state
+- \`ha_turn_on\` / \`ha_turn_off\` / \`ha_toggle\` - Control devices
+- \`ha_set_brightness\` - Set light brightness (0-100)
+- \`ha_set_temperature\` - Set thermostat temperature
+- \`ha_trigger_automation\` - Trigger automations
+- \`ha_run_script\` - Run HA scripts
+
+## Operating Guidelines
+
+1. **Be concise** - Voice responses should be short and natural
+2. **Confirm actions** - \"Turning on the living room light\"
+3. **Handle errors gracefully** - \"I couldn't find that device\"
+4. **Remember context** - If user says \"turn it off\", know what \"it\" refers to
+5. **Don't list all devices** - Only call ha_list_devices when explicitly needed"
+
+# SOUL.md - Persona and behavioral boundaries
+create_if_missing "SOUL.md" "# Personality
+
+You are a helpful, efficient home assistant. You speak naturally and concisely, like a smart speaker assistant.
+
+## Communication Style
+- Brief, conversational responses
+- German language (match user's language)
+- No unnecessary explanations
+- Confirm actions taken
+- Ask for clarification when ambiguous
+
+## Boundaries
+- Only control devices the user mentions
+- Don't make assumptions about device states
+- Don't execute potentially dangerous actions without confirmation"
+
+# TOOLS.md - Tool usage notes and patterns
+create_if_missing "TOOLS.md" "# Tool Usage Guidelines
+
+## Home Assistant Skill
+
+**IMPORTANT:** Avoid calling \`ha_list_devices\` or \`ha_get_states\` repeatedly. These return hundreds of entities and bloat context.
+
+### Efficient Patterns
+- For specific devices: Use \`ha_get_state\` with known entity_id
+- For control: Go directly to \`ha_turn_on\`/\`ha_turn_off\` with entity_id
+- For discovery: Only use \`ha_list_devices\` when user explicitly asks \"what devices do I have?\"
+
+### Entity ID Patterns
+Common domains: \`light.\`, \`switch.\`, \`climate.\`, \`cover.\`, \`script.\`, \`automation.\`"
+
+# IDENTITY.md - Agent name and character
+create_if_missing "IDENTITY.md" "name: Assistant
+emoji: 🏠
+character: Home automation assistant"
+
+# USER.md - User profile and preferences
+create_if_missing "USER.md" "# User Profile
+
+Language: German
+Location: Home
+Interaction style: Voice commands via Signal/HA Assist"
+
+bashio::log.info "Workspace bootstrap files configured"
+
 # Create auth-profiles.json for the main agent
 AGENT_DIR="${OPENCLAW_HOME}/.openclaw/agents/main/agent"
 mkdir -p "${AGENT_DIR}"
@@ -221,5 +305,10 @@ if bashio::var.true "${SIGNAL_ENABLED}"; then
     cd "${WORKSPACE_PATH}" || exit 1
     HOME="${OPENCLAW_HOME}" openclaw doctor --fix || bashio::log.warning "openclaw doctor --fix returned non-zero"
 fi
+
+# Run openclaw setup to initialize workspace properly
+bashio::log.info "Running openclaw setup to initialize workspace..."
+cd "${WORKSPACE_PATH}" || exit 1
+HOME="${OPENCLAW_HOME}" openclaw setup --workspace "${WORKSPACE_PATH}" 2>/dev/null || bashio::log.debug "openclaw setup completed (or already initialized)"
 
 bashio::log.info "OpenClaw initialization complete"
