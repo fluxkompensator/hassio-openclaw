@@ -60,6 +60,9 @@ RUN curl -fSL -o /tmp/whisper-model.tar.bz2 \
 # Install OpenClaw globally
 RUN npm install -g openclaw@latest
 
+# Install ha-mcp MCP server for Home Assistant integration
+RUN npm install -g @anthropic-ai/ha-mcp || npm install -g ha-mcp
+
 # Copy root filesystem
 COPY rootfs /
 

@@ -63,7 +63,5 @@ schema:
   tts_voice: "str?"
   dns_overrides: ["str?"]
 
-# Environment variables
-environment:
-  OPENCLAW_CONFIG_DIR: "/data/openclaw"
-  OPENCLAW_WORKSPACE_DIR: "/share/openclaw"
+# Environment variables are set dynamically in init-openclaw/run
+# to ensure consistent paths across all components

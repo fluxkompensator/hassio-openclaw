@@ -137,6 +137,24 @@ TTS_EOF
 )
 fi
 
+# Build MCP servers config for Home Assistant integration
+bashio::log.info "Configuring ha-mcp MCP server for Home Assistant..."
+MCP_CONFIG=$(cat << MCP_EOF
+"mcp": {
+        "servers": [
+          {
+            "name": "homeassistant",
+            "command": "ha-mcp",
+            "env": {
+              "HOMEASSISTANT_URL": "${HA_URL}",
+              "HOMEASSISTANT_TOKEN": "${HA_TOKEN}"
+            }
+          }
+        ]
+      }
+MCP_EOF
+)
+
 cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
 {
   "env": {
@@ -152,7 +170,8 @@ cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
         "mode": "cache-ttl",
         "ttl": "15m",
         "keepLastAssistants": 2
-      }
+      },
+      ${MCP_CONFIG}
     }
   },
 ${AUDIO_CONFIG}
@@ -190,13 +209,6 @@ EOF
     echo "SIGNAL_TRANSCRIPTION=${VOICE_TRANSCRIPTION}"
 } > /var/run/s6/container_environment/openclaw-env
 
-# Install HA skill to OpenClaw (managed skills directory)
-SKILL_DIR="${OPENCLAW_HOME}/.openclaw/skills/homeassistant"
-mkdir -p "${SKILL_DIR}"
-cp -r /opt/openclaw-ha-skill/* "${SKILL_DIR}/"
-
-bashio::log.info "Home Assistant skill installed"
-
 # Create workspace bootstrap files (only if missing - preserves user customizations)
 create_if_missing() {
     local file="$1"
@@ -214,25 +226,46 @@ create_if_missing "AGENTS.md" "# Home Assistant Voice Assistant
 
 You are a Home Assistant voice assistant running via OpenClaw. Your primary purpose is controlling smart home devices.
 
-## Available Tools
+## Available MCP Tools
 
-You have access to the \`homeassistant\` skill with these tools:
-- \`ha_list_devices\` - List all available devices (use sparingly, cache results mentally)
-- \`ha_get_states\` - Get all entity states
-- \`ha_get_state\` - Get specific entity state
-- \`ha_turn_on\` / \`ha_turn_off\` / \`ha_toggle\` - Control devices
-- \`ha_set_brightness\` - Set light brightness (0-100)
-- \`ha_set_temperature\` - Set thermostat temperature
-- \`ha_trigger_automation\` - Trigger automations
-- \`ha_run_script\` - Run HA scripts
+You have access to Home Assistant via the \`homeassistant\` MCP server with 97+ tools. Key tools include:
+
+### Entity Discovery
+- \`search_entities\` - Find entities by name, area, or type
+- \`get_entity_state\` - Get current state of an entity
+- \`get_entities\` - List entities (filter by domain)
+
+### Device Control
+- \`call_service\` - Call any HA service (light.turn_on, switch.turn_off, etc.)
+- \`set_entity_state\` - Directly set entity state
+
+### Areas & Zones
+- \`get_areas\` - List all areas
+- \`get_area_entities\` - Get entities in a specific area
+- \`get_floors\` - List floors
+- \`get_zones\` - List zones
+
+### Automations & Scripts
+- \`trigger_automation\` - Manually trigger automations
+- \`run_script\` - Execute HA scripts
+- \`create_automation\` - Create new automations
+
+### History & Stats
+- \`get_history\` - Get entity state history
+- \`get_statistics\` - Get entity statistics
+
+## Usage Tips
+
+1. **Search first** - Use \`search_entities\` to find entities by room name
+2. **Use areas** - Query by area for room-based commands (\"bathroom lights\")
+3. **Direct control** - Use \`call_service\` with known entity_id
 
 ## Operating Guidelines
 
 1. **Be concise** - Voice responses should be short and natural
 2. **Confirm actions** - \"Turning on the living room light\"
 3. **Handle errors gracefully** - \"I couldn't find that device\"
-4. **Remember context** - If user says \"turn it off\", know what \"it\" refers to
-5. **Don't list all devices** - Only call ha_list_devices when explicitly needed"
+4. **Remember context** - If user says \"turn it off\", know what \"it\" refers to"
 
 # SOUL.md - Persona and behavioral boundaries
 create_if_missing "SOUL.md" "# Personality
@@ -254,14 +287,23 @@ You are a helpful, efficient home assistant. You speak naturally and concisely, 
 # TOOLS.md - Tool usage notes and patterns
 create_if_missing "TOOLS.md" "# Tool Usage Guidelines
 
-## Home Assistant Skill
+## Home Assistant MCP Server
 
-**IMPORTANT:** Avoid calling \`ha_list_devices\` or \`ha_get_states\` repeatedly. These return hundreds of entities and bloat context.
+You have 97+ HA tools via the \`homeassistant\` MCP server.
 
 ### Efficient Patterns
-- For specific devices: Use \`ha_get_state\` with known entity_id
-- For control: Go directly to \`ha_turn_on\`/\`ha_turn_off\` with entity_id
-- For discovery: Only use \`ha_list_devices\` when user explicitly asks \"what devices do I have?\"
+- **Find by name/area**: \`search_entities\` with fuzzy matching
+- **Get state**: \`get_entity_state\` for specific entity
+- **Control**: \`call_service\` with domain.action and entity_id
+- **By room**: \`get_area_entities\` for area-based queries
+
+### Common Service Calls
+- \`light.turn_on\`, \`light.turn_off\`
+- \`switch.turn_on\`, \`switch.turn_off\`
+- \`climate.set_temperature\`
+- \`cover.open_cover\`, \`cover.close_cover\`
+- \`script.turn_on\` (to run scripts)
+- \`automation.trigger\` (to trigger automations)
 
 ### Entity ID Patterns
 Common domains: \`light.\`, \`switch.\`, \`climate.\`, \`cover.\`, \`script.\`, \`automation.\`"
