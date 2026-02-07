@@ -6,8 +6,8 @@
 APPLY_JS="/usr/lib/node_modules/openclaw/dist/media-understanding/apply.js"
 
 if [[ ! -f "$APPLY_JS" ]]; then
-    echo "Error: apply.js not found at $APPLY_JS" >&2
-    exit 1
+    echo "Warning: apply.js not found at $APPLY_JS — skipping audio patch (OpenClaw version may not need it)" >&2
+    exit 0
 fi
 
 # Check if already patched with v3
