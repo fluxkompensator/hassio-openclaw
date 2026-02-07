@@ -78,7 +78,7 @@ if bashio::var.true "${SIGNAL_ENABLED}"; then
     # Build allowFrom array from signal_allowed_numbers config
     ALLOW_FROM="[]"
     if bashio::config.has_value 'signal_allowed_numbers'; then
-        ALLOW_FROM=$(bashio::config 'signal_allowed_numbers' | jq -c '.')
+        ALLOW_FROM=$(jq -c '.signal_allowed_numbers // []' /data/options.json)
         bashio::log.info "Signal allowFrom: ${ALLOW_FROM}"
     else
         bashio::log.info "No signal_allowed_numbers configured — blocking all incoming messages"
