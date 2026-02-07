@@ -74,14 +74,24 @@ SIGNAL_CHANNEL_CONFIG=""
 if bashio::var.true "${SIGNAL_ENABLED}"; then
     bashio::log.info "Signal channel enabled for phone: ${SIGNAL_PHONE}"
     mkdir -p "${OPENCLAW_HOME}/.signal-cli"
+
+    # Build allowFrom array from signal_allowed_numbers config
+    ALLOW_FROM="[]"
+    if bashio::config.has_value 'signal_allowed_numbers'; then
+        ALLOW_FROM=$(bashio::config 'signal_allowed_numbers' | jq -c '.')
+        bashio::log.info "Signal allowFrom: ${ALLOW_FROM}"
+    else
+        bashio::log.info "No signal_allowed_numbers configured — blocking all incoming messages"
+    fi
+
     SIGNAL_CHANNEL_CONFIG=$(cat << SIGNAL_EOF
   "channels": {
     "signal": {
       "enabled": true,
       "account": "${SIGNAL_PHONE}",
       "cliPath": "signal-cli",
-      "dmPolicy": "open",
-      "allowFrom": ["*"]
+      "dmPolicy": "allowlist",
+      "allowFrom": ${ALLOW_FROM}
     }
   },
 SIGNAL_EOF

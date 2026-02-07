@@ -25,6 +25,7 @@ Control your smart home with natural language using [OpenClaw.ai](https://opencl
 | `log_level` | `info` | Logging verbosity: `debug`, `info`, `warning`, `error` |
 | `signal_enabled` | `false` | Enable Signal voice message support |
 | `signal_phone` | | Your Signal phone number (e.g., +15551234567) |
+| `signal_allowed_numbers` | `[]` | Phone numbers allowed to message the bot (E.164 format, e.g. `["+15551234567"]`) |
 | `voice_transcription` | `none` | Voice transcription engine: `sherpa-onnx`, `whisper`, or `none` |
 
 ## Authentication Setup
@@ -69,6 +70,7 @@ Control your home from anywhere using Signal voice messages with end-to-end encr
 1. **Configure the addon:**
    - Set `signal_enabled` to `true`
    - Set `signal_phone` to your phone number (e.g., `+15551234567`)
+   - Add allowed phone numbers to `signal_allowed_numbers` in E.164 format (e.g., `["+15551234567"]`). Only numbers in this list can message the bot. If left empty, all incoming messages are blocked.
    - Optionally set `voice_transcription` to `sherpa-onnx` or `whisper`
 
 2. **Link your Signal account (Web UI - Recommended):**

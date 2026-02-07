@@ -47,6 +47,7 @@ options:
   workspace_path: "/share/openclaw"
   signal_enabled: false
   signal_phone: ""
+  signal_allowed_numbers: []
   voice_transcription: "none"
   tts_voice: ""
   dns_overrides: []
@@ -59,6 +60,8 @@ schema:
   workspace_path: str
   signal_enabled: bool
   signal_phone: "str?"
+  signal_allowed_numbers:
+    - "str?"
   voice_transcription: list(sherpa-onnx|whisper|none)
   tts_voice: "str?"
   dns_overrides: ["str?"]
