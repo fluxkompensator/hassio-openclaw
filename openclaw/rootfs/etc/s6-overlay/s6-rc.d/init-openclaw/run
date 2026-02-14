@@ -147,6 +147,15 @@ TTS_EOF
 )
 fi
 
+# Build trustedProxies array: defaults + user-configured entries
+TRUSTED_PROXIES='["172.30.32.0/23", "127.0.0.1", "::1"]'
+PROXY_COUNT=$(bashio::config 'trusted_proxies | length')
+if [[ "${PROXY_COUNT}" -gt 0 ]]; then
+    EXTRA_PROXIES=$(jq -c '.trusted_proxies' /data/options.json)
+    TRUSTED_PROXIES=$(echo "${TRUSTED_PROXIES}" "${EXTRA_PROXIES}" | jq -sc '.[0] + .[1] | unique')
+    bashio::log.info "Trusted proxies: ${TRUSTED_PROXIES}"
+fi
+
 cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
 {
   "env": {
@@ -172,7 +181,7 @@ ${SIGNAL_CHANNEL_CONFIG}
     "port": 18789,
     "bind": "lan",
     "mode": "local",
-    "trustedProxies": ["172.30.32.0/23", "127.0.0.1", "::1"],
+    "trustedProxies": ${TRUSTED_PROXIES},
     "auth": {
       "mode": "token",
       "token": "${GATEWAY_TOKEN}"

@@ -3,7 +3,7 @@
 
 name: "OpenClaw"
 description: "OpenClaw.ai personal AI assistant with Home Assistant integration"
-version: "0.3.5"
+version: "0.3.6"
 slug: "openclaw"
 url: "https://github.com/openclaw/openclaw"
 
@@ -50,6 +50,7 @@ options:
   signal_allowed_numbers: []
   voice_transcription: "none"
   tts_voice: ""
+  trusted_proxies: []
   dns_overrides: []
 
 # Schema for options validation
@@ -64,6 +65,7 @@ schema:
     - "str?"
   voice_transcription: list(sherpa-onnx|whisper|none)
   tts_voice: "str?"
+  trusted_proxies: ["str?"]
   dns_overrides: ["str?"]
 
 # Environment variables are set dynamically in init-openclaw/run
