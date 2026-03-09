@@ -27,7 +27,7 @@ while true; do
     if [[ -f "${ACCOUNTS_FILE}" ]]; then
         # Extract first registered phone number from accounts.json
         # Format: {"accounts":[{"number":"+1234567890",...}]}
-        REGISTERED_PHONE=$(grep -oP '"\+[0-9]+' "${ACCOUNTS_FILE}" | head -1 | tr -d '"')
+        REGISTERED_PHONE=$(jq -r '.accounts[0].number // empty' "${ACCOUNTS_FILE}" 2>/dev/null)
 
         if [[ -n "${REGISTERED_PHONE}" ]]; then
             bashio::log.info "Found registered account: ${REGISTERED_PHONE}"

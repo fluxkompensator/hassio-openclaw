@@ -27,7 +27,7 @@ CONFIG_SCHEMA = vol.Schema(
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """Set up the OpenClaw conversation agent."""
+    """Set up the OpenClaw conversation agent from YAML."""
     if DOMAIN not in config:
         return True
 
@@ -35,7 +35,22 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     agent = OpenClawConversationAgent(hass, conf)
     conversation.async_set_agent(hass, config_entry=None, agent=agent)
 
-    _LOGGER.info("OpenClaw conversation agent registered")
+    _LOGGER.info("OpenClaw conversation agent registered (YAML)")
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up OpenClaw from a config entry (UI)."""
+    agent = OpenClawConversationAgent(hass, dict(entry.data))
+    conversation.async_set_agent(hass, config_entry=entry, agent=agent)
+
+    _LOGGER.info("OpenClaw conversation agent registered (config entry)")
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    conversation.async_unset_agent(hass, entry)
     return True
 
 
@@ -51,7 +66,7 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
     @property
     def supported_languages(self) -> list[str] | Literal["*"]:
         """Return supported languages."""
-        return ["de", "en"]
+        return "*"
 
     async def async_process(
         self, user_input: conversation.ConversationInput

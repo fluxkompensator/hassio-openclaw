@@ -5,26 +5,19 @@ FROM bbernhard/signal-cli-rest-api:latest AS signal-cli-source
 
 FROM ${BUILD_FROM}
 
-# Install Node.js 22 from NodeSource
+# Install Node.js 22, Java 21 (for signal-cli), and system dependencies in a single layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    gnupg \
+    ca-certificates curl gnupg wget apt-transport-https \
     && mkdir -p /etc/apt/keyrings \
+    # Node.js 22 repository
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
     && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends nodejs git jq \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Java 21 runtime for signal-cli (from Adoptium/Temurin)
-RUN apt-get update && apt-get install -y --no-install-recommends wget apt-transport-https \
-    && mkdir -p /etc/apt/keyrings \
+    # Java 21 repository (Adoptium/Temurin for signal-cli)
     && wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor -o /etc/apt/keyrings/adoptium.gpg \
     && echo "deb [signed-by=/etc/apt/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb $(. /etc/os-release && echo $VERSION_CODENAME) main" > /etc/apt/sources.list.d/adoptium.list \
+    # Install all packages
     && apt-get update \
-    && apt-get install -y --no-install-recommends temurin-21-jre \
+    && apt-get install -y --no-install-recommends nodejs git jq temurin-21-jre \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -57,8 +50,9 @@ RUN curl -fSL -o /tmp/whisper-model.tar.bz2 \
     && tar xjf /tmp/whisper-model.tar.bz2 -C /opt \
     && rm /tmp/whisper-model.tar.bz2
 
-# Install OpenClaw globally
-RUN npm install -g openclaw@latest
+# Install OpenClaw globally (pin version for reproducible builds)
+ARG OPENCLAW_VERSION=latest
+RUN npm install -g openclaw@${OPENCLAW_VERSION}
 
 # Copy root filesystem
 COPY rootfs /
@@ -81,4 +75,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.3.5"
+    io.hass.version="0.4.0"

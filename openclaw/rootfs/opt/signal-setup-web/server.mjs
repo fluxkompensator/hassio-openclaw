@@ -9,6 +9,14 @@ const PORT = 18790;
 const SIGNAL_DATA_DIR = '/data/openclaw/.signal-cli';
 const CONFIG_FILE = '/data/options.json';
 
+function escapeHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Cache for checkLinked to avoid blocking execSync on every request
+let linkedCache = { value: null, timestamp: 0 };
+const CACHE_TTL = 5000;
+
 // State for linking process
 let linkingState = {
   active: false,
@@ -33,17 +41,24 @@ function getConfig() {
 }
 
 function checkLinked() {
+  const now = Date.now();
+  if (linkedCache.value !== null && (now - linkedCache.timestamp) < CACHE_TTL) {
+    return linkedCache.value;
+  }
+
   const config = getConfig();
   if (!config.phone) return false;
 
   try {
-    // Check if account data exists
     const result = execSync(
       `signal-cli --config "${SIGNAL_DATA_DIR}" -a "${config.phone}" listAccounts 2>&1`,
       { encoding: 'utf8', timeout: 10000 }
     );
-    return result.includes(config.phone);
+    const linked = result.includes(config.phone);
+    linkedCache = { value: linked, timestamp: Date.now() };
+    return linked;
   } catch {
+    linkedCache = { value: false, timestamp: Date.now() };
     return false;
   }
 }
@@ -141,13 +156,13 @@ app.get('/', (req, res) => {
   ` : isLinked ? `
     <div class="status success">
       <strong>Signal Linked</strong><br>
-      Account <span class="phone">${config.phone}</span> is connected.
+      Account <span class="phone">${escapeHtml(config.phone)}</span> is connected.
     </div>
     <button onclick="startLink()">Re-link Account</button>
   ` : `
     <div class="status info">
       <strong>Ready to Link</strong><br>
-      Phone: <span class="phone">${config.phone}</span>
+      Phone: <span class="phone">${escapeHtml(config.phone)}</span>
     </div>
     <button id="link-btn" onclick="startLink()">Generate QR Code</button>
   `}

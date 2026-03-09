@@ -29,23 +29,15 @@ fi
 
 # Get configuration values
 ANTHROPIC_API_KEY=$(bashio::config 'anthropic_api_key')
-HA_ACCESS_TOKEN=$(bashio::config 'ha_access_token')
 WORKSPACE_PATH=$(bashio::config 'workspace_path')
 SIGNAL_ENABLED=$(bashio::config 'signal_enabled')
 SIGNAL_PHONE=$(bashio::config 'signal_phone')
 VOICE_TRANSCRIPTION=$(bashio::config 'voice_transcription')
 TTS_VOICE=$(bashio::config 'tts_voice')
 
-# Determine Home Assistant access method
-if bashio::config.has_value 'ha_access_token'; then
-    bashio::log.info "Using provided Home Assistant access token"
-    HA_TOKEN="${HA_ACCESS_TOKEN}"
-    HA_URL="http://supervisor/core"
-else
-    bashio::log.info "Using Supervisor API token"
-    HA_TOKEN="${SUPERVISOR_TOKEN}"
-    HA_URL="http://supervisor/core"
-fi
+# Home Assistant access via Supervisor API (always available in addon context)
+HA_TOKEN="${SUPERVISOR_TOKEN}"
+HA_URL="http://supervisor/core"
 
 # Create OpenClaw config directory
 OPENCLAW_HOME="/data/openclaw"
@@ -69,15 +61,38 @@ bashio::log.info "Gateway token: ${GATEWAY_TOKEN}"
 # Generate OpenClaw configuration in correct location
 mkdir -p "${OPENCLAW_HOME}/.openclaw"
 
-# Build Signal channel config if enabled
-SIGNAL_CHANNEL_CONFIG=""
+# Build OpenClaw configuration with jq (type-safe JSON generation)
+CONFIG=$(jq -n \
+    --arg api_key "${ANTHROPIC_API_KEY}" \
+    --arg workspace "${WORKSPACE_PATH}" \
+    --arg gateway_token "${GATEWAY_TOKEN}" \
+    '{
+        env: { ANTHROPIC_API_KEY: $api_key },
+        agents: {
+            defaults: {
+                workspace: $workspace,
+                model: { primary: "anthropic/claude-opus-4-5" },
+                contextPruning: { mode: "cache-ttl", ttl: "5m", keepLastAssistants: 1 }
+            }
+        },
+        gateway: {
+            port: 18789,
+            bind: "lan",
+            mode: "local",
+            trustedProxies: ["172.30.32.0/23", "127.0.0.1", "::1"],
+            auth: { mode: "token", token: $gateway_token },
+            controlUi: { enabled: true, allowInsecureAuth: true }
+        }
+    }')
+
+# Add Signal channel if enabled
 if bashio::var.true "${SIGNAL_ENABLED}"; then
     bashio::log.info "Signal channel enabled for phone: ${SIGNAL_PHONE}"
     mkdir -p "${OPENCLAW_HOME}/.signal-cli"
 
     # Build allowFrom array from signal_allowed_numbers config
     # Auto-prepend + to numbers missing it (E.164 format)
-    ALLOW_FROM="[]"
+    ALLOW_FROM='[]'
     if bashio::config.has_value 'signal_allowed_numbers'; then
         ALLOW_FROM=$(jq -c '[.signal_allowed_numbers[] | if startswith("+") then . else "+" + . end]' /data/options.json)
         bashio::log.info "Signal allowFrom: ${ALLOW_FROM}"
@@ -85,114 +100,50 @@ if bashio::var.true "${SIGNAL_ENABLED}"; then
         bashio::log.info "No signal_allowed_numbers configured — blocking all incoming messages"
     fi
 
-    SIGNAL_CHANNEL_CONFIG=$(cat << SIGNAL_EOF
-  "channels": {
-    "signal": {
-      "enabled": true,
-      "account": "${SIGNAL_PHONE}",
-      "cliPath": "signal-cli",
-      "dmPolicy": "allowlist",
-      "allowFrom": ${ALLOW_FROM}
-    }
-  },
-SIGNAL_EOF
-)
+    CONFIG=$(echo "${CONFIG}" | jq \
+        --arg phone "${SIGNAL_PHONE}" \
+        --argjson allow_from "${ALLOW_FROM}" \
+        '.channels.signal = {
+            enabled: true, account: $phone, cliPath: "signal-cli",
+            dmPolicy: "allowlist", allowFrom: $allow_from
+        }')
 fi
 
-# Build audio transcription config if enabled
-AUDIO_CONFIG=""
-if [[ "${VOICE_TRANSCRIPTION}" == "sherpa-onnx" ]]; then
-    bashio::log.info "Voice transcription enabled: sherpa-onnx"
-    # Use wrapper script that handles AAC->WAV conversion
+# Add audio transcription config if enabled
+if [[ "${VOICE_TRANSCRIPTION}" == "sherpa-onnx" || "${VOICE_TRANSCRIPTION}" == "whisper" ]]; then
+    bashio::log.info "Voice transcription enabled: ${VOICE_TRANSCRIPTION} (sherpa-onnx + whisper model)"
     if [[ -x "/usr/local/bin/transcribe-audio" ]]; then
         bashio::log.info "Using transcribe-audio wrapper (handles AAC->WAV conversion)"
-        AUDIO_CONFIG=$(cat << AUDIO_EOF
-  "tools": {
-    "media": {
-      "audio": {
-        "enabled": true,
-        "models": [
-          {
-            "type": "cli",
-            "command": "/usr/local/bin/transcribe-audio",
-            "args": ["{{MediaPath}}"]
-          }
-        ]
-      }
-    }
-  },
-AUDIO_EOF
-)
+        CONFIG=$(echo "${CONFIG}" | jq \
+            '.tools.media.audio = {
+                enabled: true,
+                models: [{ type: "cli", command: "/usr/local/bin/transcribe-audio", args: ["{{MediaPath}}"] }]
+            }')
     else
         bashio::log.warning "transcribe-audio wrapper not found"
     fi
 fi
 
-# Build TTS config for German voice (Edge TTS)
-TTS_CONFIG=""
+# Add TTS config if voice is set
 if [[ -n "${TTS_VOICE}" ]]; then
     TTS_VOICE_FINAL="${TTS_VOICE:-de-DE-ConradNeural}"
     bashio::log.info "TTS configured: Edge with voice ${TTS_VOICE_FINAL}"
-    TTS_CONFIG=$(cat << TTS_EOF
-  "messages": {
-    "tts": {
-      "auto": "always",
-      "provider": "edge",
-      "edge": {
-        "voice": "${TTS_VOICE_FINAL}"
-      }
-    }
-  },
-TTS_EOF
-)
+    CONFIG=$(echo "${CONFIG}" | jq \
+        --arg voice "${TTS_VOICE_FINAL}" \
+        '.messages.tts = { auto: "always", provider: "edge", edge: { voice: $voice } }')
 fi
 
-# Build trustedProxies array: defaults + user-configured entries
-TRUSTED_PROXIES='["172.30.32.0/23", "127.0.0.1", "::1"]'
+# Merge user-configured trusted proxies into gateway config
 PROXY_COUNT=$(bashio::config 'trusted_proxies | length')
 if [[ "${PROXY_COUNT}" -gt 0 ]]; then
     EXTRA_PROXIES=$(jq -c '.trusted_proxies' /data/options.json)
-    TRUSTED_PROXIES=$(echo "${TRUSTED_PROXIES}" "${EXTRA_PROXIES}" | jq -sc '.[0] + .[1] | unique')
-    bashio::log.info "Trusted proxies: ${TRUSTED_PROXIES}"
+    CONFIG=$(echo "${CONFIG}" | jq \
+        --argjson extra "${EXTRA_PROXIES}" \
+        '.gateway.trustedProxies = (.gateway.trustedProxies + $extra | unique)')
+    bashio::log.info "Trusted proxies: $(echo "${CONFIG}" | jq -c '.gateway.trustedProxies')"
 fi
 
-cat > "${OPENCLAW_HOME}/.openclaw/openclaw.json" << EOF
-{
-  "env": {
-    "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
-  },
-  "agents": {
-    "defaults": {
-      "workspace": "${WORKSPACE_PATH}",
-      "model": {
-        "primary": "anthropic/claude-opus-4-5"
-      },
-      "contextPruning": {
-        "mode": "cache-ttl",
-        "ttl": "5m",
-        "keepLastAssistants": 1
-      }
-    }
-  },
-${AUDIO_CONFIG}
-${TTS_CONFIG}
-${SIGNAL_CHANNEL_CONFIG}
-  "gateway": {
-    "port": 18789,
-    "bind": "lan",
-    "mode": "local",
-    "trustedProxies": ${TRUSTED_PROXIES},
-    "auth": {
-      "mode": "token",
-      "token": "${GATEWAY_TOKEN}"
-    },
-    "controlUi": {
-      "enabled": true,
-      "allowInsecureAuth": true
-    }
-  }
-}
-EOF
+echo "${CONFIG}" > "${OPENCLAW_HOME}/.openclaw/openclaw.json"
 
 # Export environment variables for the main service
 {
@@ -209,14 +160,23 @@ EOF
     echo "SIGNAL_TRANSCRIPTION=${VOICE_TRANSCRIPTION}"
 } > /var/run/s6/container_environment/openclaw-env
 
-# Install Home Assistant skills
+# Install Home Assistant skills (with version tracking for updates)
 SKILL_DIR="${OPENCLAW_HOME}/.openclaw/skills"
 mkdir -p "${SKILL_DIR}"
 
-# Install bundled HA skill (optimized for addon environment)
-if [[ ! -d "${SKILL_DIR}/homeassistant-addon" ]]; then
+SKILL_VERSION="0.4.0"
+INSTALLED_VERSION=""
+if [[ -f "${SKILL_DIR}/homeassistant-addon/.version" ]]; then
+    INSTALLED_VERSION=$(cat "${SKILL_DIR}/homeassistant-addon/.version")
+fi
+
+if [[ "${INSTALLED_VERSION}" != "${SKILL_VERSION}" ]]; then
+    rm -rf "${SKILL_DIR}/homeassistant-addon"
     cp -r /opt/ha-skill "${SKILL_DIR}/homeassistant-addon"
-    bashio::log.info "Installed homeassistant-addon skill"
+    echo "${SKILL_VERSION}" > "${SKILL_DIR}/homeassistant-addon/.version"
+    bashio::log.info "Installed homeassistant-addon skill v${SKILL_VERSION}"
+else
+    bashio::log.debug "homeassistant-addon skill v${SKILL_VERSION} already installed"
 fi
 
 # Create workspace bootstrap files (only if missing - preserves user customizations)
