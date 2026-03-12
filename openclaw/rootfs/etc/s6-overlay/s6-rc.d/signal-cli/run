@@ -1,7 +1,9 @@
 #!/command/with-contenv bashio
 # shellcheck shell=bash
 # ==============================================================================
-# Start signal-cli daemon for OpenClaw Signal channel
+# Monitor signal-cli account status for OpenClaw Signal channel
+# OpenClaw manages the signal-cli daemon itself via cliPath config.
+# This service only logs account status and stays alive for s6.
 # ==============================================================================
 
 # Source environment variables
@@ -13,26 +15,24 @@ fi
 # Check if Signal is enabled
 SIGNAL_ENABLED=$(bashio::config 'signal_enabled')
 if ! bashio::var.true "${SIGNAL_ENABLED}"; then
-    bashio::log.info "Signal channel disabled, not starting signal-cli daemon"
+    bashio::log.info "Signal channel disabled"
     exec sleep infinity
 fi
 
 # Set signal-cli config directory
 export SIGNAL_CLI_CONFIG_DIR="${SIGNAL_CLI_CONFIG_DIR:-/data/openclaw/.signal-cli}"
 
-# Wait for an account to be linked
+# Wait for an account to be linked, then hand off to OpenClaw
 ACCOUNTS_FILE="${SIGNAL_CLI_CONFIG_DIR}/data/accounts.json"
 
 while true; do
     if [[ -f "${ACCOUNTS_FILE}" ]]; then
-        # Extract first registered phone number from accounts.json
-        # Format: {"accounts":[{"number":"+1234567890",...}]}
         REGISTERED_PHONE=$(jq -r '.accounts[0].number // empty' "${ACCOUNTS_FILE}" 2>/dev/null)
 
         if [[ -n "${REGISTERED_PHONE}" ]]; then
             bashio::log.info "Found registered account: ${REGISTERED_PHONE}"
-            bashio::log.info "Starting signal-cli daemon on HTTP port 8080..."
-            exec signal-cli --config "${SIGNAL_CLI_CONFIG_DIR}" -a "${REGISTERED_PHONE}" daemon --http=127.0.0.1:8080
+            bashio::log.info "Signal daemon will be managed by OpenClaw gateway"
+            exec sleep infinity
         fi
     fi
 
