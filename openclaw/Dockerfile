@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install signal-cli with native libsignal (morph027 packages support aarch64+amd64)
 ARG SIGNAL_CLI_VERSION=0.14.1
-ARG SIGNAL_CLI_NATIVE_VERSION=0.14.1+morph027+1
+ARG SIGNAL_CLI_NATIVE_VERSION=0.14.1+morph027+2
 RUN curl -fsSL https://packaging.gitlab.io/signal-cli/gpg.key | gpg --dearmor -o /usr/share/keyrings/signal-cli-native.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/signal-cli-native.gpg] https://packaging.gitlab.io/signal-cli signalcli main" > /etc/apt/sources.list.d/signal-cli-native.list \
     && apt-get update \
