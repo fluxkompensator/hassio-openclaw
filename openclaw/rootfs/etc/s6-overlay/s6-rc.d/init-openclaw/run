@@ -170,7 +170,7 @@ mkdir -p /var/tmp/openclaw-compile-cache
 SKILL_DIR="${OPENCLAW_HOME}/.openclaw/skills"
 mkdir -p "${SKILL_DIR}"
 
-SKILL_VERSION="0.4.0"
+SKILL_VERSION="0.5.0"
 INSTALLED_VERSION=""
 if [[ -f "${SKILL_DIR}/homeassistant-addon/.version" ]]; then
     INSTALLED_VERSION=$(cat "${SKILL_DIR}/homeassistant-addon/.version")
@@ -251,25 +251,34 @@ You are a helpful, efficient home assistant. You speak naturally and concisely, 
 # TOOLS.md - Tool usage notes and patterns
 create_if_missing "TOOLS.md" "# Tool Usage Guidelines
 
-## Home Assistant Control
+## Home Assistant Control & Management
 
 Use the \`homeassistant-addon\` skill for full API documentation. Quick reference:
 
 ### Service Domains
-- light: turn_on, turn_off, toggle
-- switch: turn_on, turn_off, toggle
-- climate: set_temperature, set_hvac_mode
-- cover: open_cover, close_cover, set_cover_position
-- automation: trigger, turn_on, turn_off
-- script: turn_on
-- scene: turn_on
-- media_player: media_play_pause, volume_set
+- light, switch, fan, cover, lock, vacuum: turn_on, turn_off, toggle
+- climate: set_temperature, set_hvac_mode, set_fan_mode
+- media_player: media_play, media_pause, volume_set, select_source
+- automation, script, scene: trigger/turn_on
+- input_boolean, input_number, input_select, input_text: helpers
+
+### Device & Entity Management
+- Rename devices: device_registry/update (name_by_user)
+- Rename entities: entity_registry/update (name, new_entity_id)
+- Assign to areas: device_registry/update (area_id)
+- Create areas: area_registry/create
+- Disable entities: entity_registry/update (disabled_by)
 
 ### Area-Based Queries (Recommended)
 Use Template API to find entities by room:
 \\\`\\\`\\\`
 {{ area_entities(\"bathroom\") | select(\"match\", \"light.*\") | list }}
 \\\`\\\`\\\`
+
+### Automation & Helpers
+- Create automations: /api/config/automation/config/NEW_ID
+- Create helpers: /api/config/input_boolean, input_number, etc.
+- Supervisor access: http://supervisor/ (addons, core, host, network)
 
 ### Entity ID Patterns
 Common domains: light., switch., climate., cover., script., automation., sensor., binary_sensor."
