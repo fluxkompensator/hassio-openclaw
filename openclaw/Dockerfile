@@ -2,43 +2,32 @@ ARG BUILD_FROM
 
 FROM ${BUILD_FROM}
 
-# Install Node.js 22, Java 21 (for signal-cli), and system dependencies in a single layer
+# Install Node.js 22 and system dependencies (no Java needed — signal-cli-native is a GraalVM binary)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl gnupg wget apt-transport-https \
     && mkdir -p /etc/apt/keyrings \
     # Node.js 22 repository
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
     && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list \
-    # Java 21 repository (Adoptium/Temurin for signal-cli)
-    && wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor -o /etc/apt/keyrings/adoptium.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb $(. /etc/os-release && echo $VERSION_CODENAME) main" > /etc/apt/sources.list.d/adoptium.list \
     # Install all packages
     && apt-get update \
-    && apt-get install -y --no-install-recommends nodejs git jq temurin-21-jre \
+    && apt-get install -y --no-install-recommends nodejs git jq \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install signal-cli from official release + native libsignal for the target arch
-ARG SIGNAL_CLI_VERSION=0.13.24
-ARG LIBSIGNAL_VERSION=0.87.0
-RUN curl -fSL -o /tmp/signal-cli.tar.gz \
-       "https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}.tar.gz" \
-    && tar xzf /tmp/signal-cli.tar.gz -C /opt \
-    && ln -sf /opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli /usr/local/bin/signal-cli \
-    && rm /tmp/signal-cli.tar.gz \
-    # Download native libsignal_jni.so for the build architecture
-    && ARCH=$(uname -m) \
-    && if [ "$ARCH" = "x86_64" ]; then \
-         LIBSIGNAL_TRIPLE="x86_64-unknown-linux-gnu"; \
-       elif [ "$ARCH" = "aarch64" ]; then \
-         LIBSIGNAL_TRIPLE="aarch64-unknown-linux-gnu"; \
-       else \
-         echo "Unsupported architecture: $ARCH" && exit 1; \
-       fi \
-    && curl -fSL -o /tmp/libsignal.tar.gz \
-       "https://github.com/exquo/signal-libs-build/releases/download/libsignal_v${LIBSIGNAL_VERSION}/libsignal_jni.so-v${LIBSIGNAL_VERSION}-${LIBSIGNAL_TRIPLE}.tar.gz" \
-    && tar xzf /tmp/libsignal.tar.gz -C /usr/lib \
-    && rm /tmp/libsignal.tar.gz
+# Install signal-cli with native libsignal (morph027 packages support aarch64+amd64)
+ARG SIGNAL_CLI_VERSION=0.14.1
+ARG SIGNAL_CLI_NATIVE_VERSION=0.14.1+morph027+1
+RUN curl -fsSL https://packaging.gitlab.io/signal-cli/gpg.key | gpg --dearmor -o /usr/share/keyrings/signal-cli-native.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/signal-cli-native.gpg] https://packaging.gitlab.io/signal-cli signalcli main" > /etc/apt/sources.list.d/signal-cli-native.list \
+    && apt-get update \
+    && cd /tmp \
+    && apt-get download signal-cli-native=${SIGNAL_CLI_NATIVE_VERSION} \
+    && ar x signal-cli-native_*.deb \
+    && tar xf data.tar.* -C / \
+    && rm -f /tmp/signal-cli-native_* /tmp/data.tar.* /tmp/control.tar.* /tmp/debian-binary \
+    && ln -sf /opt/signal-cli-native/bin/signal-cli /usr/local/bin/signal-cli \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install ffmpeg for audio conversion (AAC -> WAV) and sherpa-onnx for transcription
 ARG SHERPA_VERSION=1.12.20
@@ -90,4 +79,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.4.3"
+    io.hass.version="0.5.0"
