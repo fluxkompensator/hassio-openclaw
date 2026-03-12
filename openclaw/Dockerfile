@@ -1,8 +1,5 @@
 ARG BUILD_FROM
 
-# Get signal-cli with native libs from multi-arch image
-FROM bbernhard/signal-cli-rest-api:latest AS signal-cli-source
-
 FROM ${BUILD_FROM}
 
 # Install Node.js 22, Java 21 (for signal-cli), and system dependencies in a single layer
@@ -21,9 +18,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy signal-cli from multi-arch image (has ARM64 native libs)
-COPY --from=signal-cli-source /opt/signal-cli-* /opt/signal-cli/
-RUN ln -s /opt/signal-cli/bin/signal-cli /usr/local/bin/signal-cli
+# Install signal-cli directly from official release (pinned for ACI compatibility)
+ARG SIGNAL_CLI_VERSION=0.13.24
+RUN curl -fSL -o /tmp/signal-cli.tar.gz \
+       "https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}.tar.gz" \
+    && tar xzf /tmp/signal-cli.tar.gz -C /opt \
+    && ln -sf /opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli /usr/local/bin/signal-cli \
+    && rm /tmp/signal-cli.tar.gz
 
 # Install ffmpeg for audio conversion (AAC -> WAV) and sherpa-onnx for transcription
 ARG SHERPA_VERSION=1.12.20
@@ -75,4 +76,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.4.0"
+    io.hass.version="0.4.1"
