@@ -18,13 +18,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install signal-cli directly from official release (pinned for ACI compatibility)
+# Install signal-cli from official release + native libsignal for the target arch
 ARG SIGNAL_CLI_VERSION=0.13.24
+ARG LIBSIGNAL_VERSION=0.87.0
 RUN curl -fSL -o /tmp/signal-cli.tar.gz \
        "https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}.tar.gz" \
     && tar xzf /tmp/signal-cli.tar.gz -C /opt \
     && ln -sf /opt/signal-cli-${SIGNAL_CLI_VERSION}/bin/signal-cli /usr/local/bin/signal-cli \
-    && rm /tmp/signal-cli.tar.gz
+    && rm /tmp/signal-cli.tar.gz \
+    # Download native libsignal_jni.so for the build architecture
+    && ARCH=$(uname -m) \
+    && if [ "$ARCH" = "x86_64" ]; then \
+         LIBSIGNAL_TRIPLE="x86_64-unknown-linux-gnu"; \
+       elif [ "$ARCH" = "aarch64" ]; then \
+         LIBSIGNAL_TRIPLE="aarch64-unknown-linux-gnu"; \
+       else \
+         echo "Unsupported architecture: $ARCH" && exit 1; \
+       fi \
+    && curl -fSL -o /tmp/libsignal.tar.gz \
+       "https://github.com/exquo/signal-libs-build/releases/download/libsignal_v${LIBSIGNAL_VERSION}/libsignal_jni.so-v${LIBSIGNAL_VERSION}-${LIBSIGNAL_TRIPLE}.tar.gz" \
+    && tar xzf /tmp/libsignal.tar.gz -C /usr/lib \
+    && rm /tmp/libsignal.tar.gz
 
 # Install ffmpeg for audio conversion (AAC -> WAV) and sherpa-onnx for transcription
 ARG SHERPA_VERSION=1.12.20
@@ -76,4 +90,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.4.1"
+    io.hass.version="0.4.2"

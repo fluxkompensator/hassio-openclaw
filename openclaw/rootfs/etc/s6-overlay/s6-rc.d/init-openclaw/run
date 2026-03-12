@@ -158,7 +158,13 @@ echo "${CONFIG}" > "${OPENCLAW_HOME}/.openclaw/openclaw.json"
     echo "SIGNAL_CLI_CONFIG_DIR=${OPENCLAW_HOME}/.signal-cli"
     echo "SIGNAL_PHONE=${SIGNAL_PHONE}"
     echo "SIGNAL_TRANSCRIPTION=${VOICE_TRANSCRIPTION}"
+    # Startup optimizations (silence openclaw doctor warnings)
+    echo "NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache"
+    echo "OPENCLAW_NO_RESPAWN=1"
 } > /var/run/s6/container_environment/openclaw-env
+
+# Ensure Node compile cache directory exists
+mkdir -p /var/tmp/openclaw-compile-cache
 
 # Install Home Assistant skills (with version tracking for updates)
 SKILL_DIR="${OPENCLAW_HOME}/.openclaw/skills"
