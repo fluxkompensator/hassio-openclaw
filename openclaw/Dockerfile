@@ -26,7 +26,8 @@ RUN curl -fsSL https://packaging.gitlab.io/signal-cli/gpg.key | gpg --dearmor -o
     && ar x signal-cli-native_*.deb \
     && tar xf data.tar.* -C / \
     && rm -f /tmp/signal-cli-native_* /tmp/data.tar.* /tmp/control.tar.* /tmp/debian-binary \
-    && ln -sf /usr/bin/signal-cli-native /usr/local/bin/signal-cli \
+    && printf '#!/bin/sh\nexec /usr/bin/signal-cli-native --config "${SIGNAL_CLI_CONFIG_DIR:-/data/openclaw/.signal-cli}" "$@"\n' > /usr/local/bin/signal-cli \
+    && chmod +x /usr/local/bin/signal-cli \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install ffmpeg for audio conversion (AAC -> WAV) and sherpa-onnx for transcription
@@ -79,4 +80,4 @@ LABEL \
     io.hass.name="OpenClaw" \
     io.hass.description="OpenClaw.ai personal AI assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.5.2"
+    io.hass.version="0.5.3"
