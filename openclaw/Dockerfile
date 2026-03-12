@@ -26,7 +26,7 @@ RUN curl -fsSL https://packaging.gitlab.io/signal-cli/gpg.key | gpg --dearmor -o
     && ar x signal-cli-native_*.deb \
     && tar xf data.tar.* -C / \
     && rm -f /tmp/signal-cli-native_* /tmp/data.tar.* /tmp/control.tar.* /tmp/debian-binary \
-    && ln -sf /opt/signal-cli-native/bin/signal-cli /usr/local/bin/signal-cli \
+    && ln -sf /usr/bin/signal-cli-native /usr/local/bin/signal-cli \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install ffmpeg for audio conversion (AAC -> WAV) and sherpa-onnx for transcription
